@@ -39,8 +39,8 @@ header{display:flex;justify-content:space-between;align-items:center;gap:10px}
 button{border:0;border-radius:9px;padding:9px 12px;background:#252e2b;color:#f5f7f6;font-size:12px;font-weight:750}
 button.primary{background:var(--red);color:white}button:disabled{opacity:.4}
 #diagnostics{display:none;background:#111817;border:1px solid #303a36;border-radius:12px;padding:10px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto;color:#c5ceca}
-/* Narrow phones / Galaxy Fold cover screen */
-@media(max-width:520px){
+/* Narrow phones / Galaxy Fold cover screen / Mobile layout */
+@media(max-width:768px){
  .app{min-height:calc(100dvh - 10px);gap:clamp(12px,2.2vh,20px);padding:clamp(12px,3vw,17px)}
  .mainrow{grid-template-columns:minmax(0,1fr);gap:10px}
  .mainrow>.card:first-child{padding:clamp(14px,3.8vw,20px)}
@@ -63,7 +63,7 @@ button.primary{background:var(--red);color:white}button:disabled{opacity:.4}
 }
 @media(max-width:370px){.gauges{gap:6px}.gaugecard{min-height:165px}.gauge-title{font-size:8px}}
 @media(orientation:landscape) and (max-height:520px){.app{max-width:1100px;min-height:auto}.gauges{grid-template-columns:repeat(3,minmax(0,1fr))}.gaugecard{min-height:125px}.speedval{font-size:clamp(48px,8vw,70px)}.gauge{max-height:78px}}
-@media(min-width:700px){.app{padding:18px}.gaugecard{min-height:190px}}
+@media(min-width:769px){.app{padding:18px}.gaugecard{min-height:190px}}
 </style>
 </head>
 <body>
