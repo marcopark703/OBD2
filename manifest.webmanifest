@@ -7,7 +7,7 @@
   "orientation": "any",
   "background_color": "#090d0c",
   "theme_color": "#090d0c",
-  "description": "Responsive BLE OBD-II vehicle dashboard",
+  "description": "Universal BLE OBD-II dashboard — v1.0.0",
   "icons": [
     {
       "src": "./icons/icon-192.png",

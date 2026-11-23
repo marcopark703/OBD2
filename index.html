@@ -39,7 +39,29 @@ header{display:flex;justify-content:space-between;align-items:center;gap:10px}
 button{border:0;border-radius:9px;padding:9px 12px;background:#252e2b;color:#f5f7f6;font-size:12px;font-weight:750}
 button.primary{background:var(--red);color:white}button:disabled{opacity:.4}
 #diagnostics{display:none;background:#111817;border:1px solid #303a36;border-radius:12px;padding:10px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto;color:#c5ceca}
-@media(max-width:370px){.mainrow{grid-template-columns:minmax(0,1.8fr) minmax(0,1fr)}.speedval{font-size:clamp(56px,15vw,68px)}.gaugecard{min-height:138px}.gauges{gap:6px}}
+/* Narrow phones / Galaxy Fold cover screen */
+@media(max-width:520px){
+ .app{min-height:calc(100dvh - 10px);gap:clamp(12px,2.2vh,20px);padding:clamp(12px,3vw,17px)}
+ .mainrow{grid-template-columns:minmax(0,1fr);gap:10px}
+ .mainrow>.card:first-child{padding:clamp(14px,3.8vw,20px)}
+ .speedval{font-size:clamp(76px,19vw,116px);letter-spacing:-5px}
+ .rpmval{font-size:clamp(34px,8vw,48px);margin-top:7px}
+ .mainrow>.card:nth-child(2){display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}
+ .mainrow>.card:nth-child(2) .kicker{grid-column:1}
+ .mainrow>.card:nth-child(2) .rpmval{grid-column:2;grid-row:1/3;margin:0}
+ .mainrow>.card:nth-child(2) .unit{grid-column:1;grid-row:2}
+ .mainrow>.card:nth-child(2) .track{grid-column:1/-1}
+ .gauges{gap:8px}
+ .gaugecard{min-height:clamp(174px,23vh,220px);padding:clamp(10px,2.6vw,15px)}
+ .gauge{max-height:clamp(95px,14vh,135px)}
+ .gauge-value{font-size:clamp(27px,7vw,38px)}
+ .bottom .card{padding:clamp(13px,3vw,18px);min-height:clamp(82px,11vh,108px)}
+ .bottom .value{font-size:clamp(23px,6vw,32px)}
+ .controls{gap:6px}
+ .controls button{padding:8px 10px;font-size:11px}
+ .footer{font-size:8px}
+}
+@media(max-width:370px){.gauges{gap:6px}.gaugecard{min-height:165px}.gauge-title{font-size:8px}}
 @media(orientation:landscape) and (max-height:520px){.app{max-width:1100px;min-height:auto}.gauges{grid-template-columns:repeat(3,minmax(0,1fr))}.gaugecard{min-height:125px}.speedval{font-size:clamp(48px,8vw,70px)}.gauge{max-height:78px}}
 @media(min-width:700px){.app{padding:18px}.gaugecard{min-height:190px}}
 </style>
