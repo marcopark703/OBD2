@@ -251,7 +251,8 @@ header{
   display:flex;
   flex-direction:column;
   align-items:center;
-  justify-content:flex-start;
+  justify-content:center;
+  gap:clamp(6px, 1vh, 10px);
   position:relative;
   overflow:hidden;
 }
@@ -262,27 +263,34 @@ header{
   align-items:center;
   flex:0 0 auto;
 }
-.gauge-svg-wrap{
+.gauge-body{
   position:relative;
   width:100%;
-  max-width:100%;
   flex:1 1 auto;
   min-height:0;
   display:flex;
   align-items:center;
   justify-content:center;
-  margin-top:clamp(2px, 0.8vh, 6px);
+}
+.gauge-svg-wrap{
+  position:relative;
+  width:100%;
+  max-width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .gauge-svg{
   width:100%;
   height:100%;
-  max-height:clamp(140px,32vh,240px);
+  max-height:clamp(130px,28vh,220px);
   display:block;
   overflow:visible;
 }
 
-/* 게이지 내부 중앙 텍스트: 아크 안쪽에 밀착 */
-.gauge-center-info{
+/* 게이지 내부 중앙 텍스트 (넓은 화면 기본) */
+.gauge-info-wrap{
   position:absolute;
   bottom:clamp(0px,0.8vh,8px);
   left:0;
@@ -318,45 +326,58 @@ header{
   background:var(--card-bg);
   border:1px solid var(--panel-border);
   border-radius:var(--radius-md);
-  padding:clamp(8px,1.3vh,12px) clamp(8px,1.4vw,12px);
+  padding:clamp(6px,1.1vh,10px) clamp(8px,1.3vw,12px);
   display:flex;
   flex-direction:column;
   justify-content:space-between;
   position:relative;
   transition:border-color .3s ease, box-shadow .3s ease;
-  min-height:clamp(64px,10vh,82px);
+  min-height:clamp(54px,8.5vh,74px);
 }
 .stat-card-top{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  flex-wrap:nowrap;
+  min-width:0;
+  overflow:hidden;
+  gap:4px;
+}
+.stat-card-top .kicker{
+  font-size:clamp(8.5px, 1.2vh, 10px);
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .stat-badge{
-  font-size:8px;
+  font-size:clamp(7.5px, 1.1vh, 8.5px);
   font-weight:800;
   padding:1px 5px;
   border-radius:4px;
   background:#1a2321;
   color:var(--text-dim);
   text-transform:uppercase;
-  letter-spacing:.5px;
+  letter-spacing:.3px;
+  white-space:nowrap;
+  flex-shrink:0;
   transition:all .3s ease;
 }
 .stat-value-group{
   display:flex;
   align-items:baseline;
   gap:3px;
-  margin-top:clamp(2px,0.5vh,5px);
+  margin-top:clamp(1px,0.4vh,4px);
 }
 .stat-value{
-  font-size:clamp(19px,3.2vh,27px);
+  font-size:clamp(18px,2.9vh,25px);
   font-weight:900;
   line-height:1;
   color:var(--text-primary);
   transition:color .3s ease;
 }
 .stat-unit{
-  font-size:clamp(9px,1.4vh,11px);
+  font-size:clamp(9px,1.3vh,11px);
   font-weight:700;
   color:var(--text-secondary);
 }
@@ -518,28 +539,92 @@ body.is-connected .bottom-controls{
   color:#94a3b8;
 }
 
-/* Fold5 전면 화면 및 세로 좁은 폰 최적화 */
-@media(max-width:480px){
+/* Fold5 전면 화면 및 세로 좁은 폰 최적화 (max-width: 520px) */
+@media(max-width:520px){
   .app{
-    padding:8px 10px;
-    gap:8px;
+    padding:clamp(6px, 1.2vh, 10px) clamp(8px, 2vw, 12px);
+    gap:clamp(5px, 1vh, 8px);
+  }
+  header{
+    min-height:26px;
   }
   .rpm-section{
-    padding:7px 10px;
-    gap:5px;
+    padding:clamp(5px, 0.9vh, 8px) clamp(8px, 1.8vw, 12px);
+    gap:clamp(3px, 0.6vh, 6px);
+  }
+  .rpm-digital{
+    font-size:clamp(20px, 3.2vh, 26px);
+  }
+  .rpm-bar-container{
+    height:clamp(12px, 1.8vh, 16px);
+  }
+
+  /* 1. SPEED / BOOST 위·아래 1열 배치 전환 */
+  .main-gauges-row{
+    grid-template-columns:1fr;
+    gap:clamp(6px, 1vh, 8px);
   }
   .gauge-card{
-    padding:8px 8px 10px 8px;
+    padding:clamp(6px, 0.9vh, 8px) clamp(10px, 2.5vw, 14px);
+    gap:clamp(2px, 0.5vh, 4px);
+  }
+  .gauge-card-header{
+    width:100%;
+    margin-bottom:2px;
+  }
+  /* 가로형 레이아웃 (왼쪽: 아크 게이지 / 오른쪽: 큰 숫자 + 단위) */
+  .gauge-body{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    align-items:center;
+    column-gap:10px;
+    width:100%;
+  }
+  .gauge-svg-wrap{
+    width:100%;
+    max-width:175px;
+    margin:0 auto;
+    height:auto;
   }
   .gauge-svg{
-    max-height:clamp(110px, 24vh, 150px);
+    width:100%;
+    height:auto;
+    max-height:clamp(75px, 11.5vh, 98px);
+  }
+  .gauge-info-wrap{
+    position:static;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    padding-left:4px;
+    pointer-events:auto;
   }
   .gauge-num{
-    font-size:clamp(34px, 7.5vh, 48px);
+    font-size:clamp(38px, 5.8vh, 52px);
+    font-weight:950;
+    line-height:.92;
+  }
+  .gauge-unit{
+    font-size:clamp(11px, 1.6vh, 13px);
+    font-weight:800;
+    margin-top:2px;
+  }
+
+  /* 2. 하단 보조 지표 2열 그리드 (2x2) */
+  .sub-stats-row{
+    grid-template-columns:repeat(2, 1fr);
+    gap:clamp(5px, 0.9vh, 7px);
   }
   .stat-card{
-    padding:7px 8px;
-    min-height:58px;
+    padding:clamp(5px, 0.8vh, 8px) clamp(8px, 1.5vw, 10px);
+    min-height:clamp(50px, 7.8vh, 66px);
+  }
+  .stat-card.span-full{
+    grid-column:span 2;
+  }
+  .stat-value{
+    font-size:clamp(17px, 2.6vh, 23px);
   }
 }
 
@@ -617,21 +702,23 @@ body.is-connected .bottom-controls{
       <div class="gauge-card-header">
         <span class="kicker">VEHICLE SPEED</span>
       </div>
-      <div class="gauge-svg-wrap">
-        <svg class="gauge-svg" viewBox="15 25 170 88" aria-label="Speed Gauge">
-          <!-- 정확한 180도 반원 눈금 Ticks (카드 밖 삐져나옴 원천 차단) -->
-          <g id="speedTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
-          <!-- 베이스 백그라운드 아크 (반원, 캡 라운드, 양끝 큰점 제거) -->
-          <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
-          <!-- 활성 아크 (빨강/화이트) - 0 상태에서는 opacity 0으로 점 제거 -->
-          <path id="speedArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease;"/>
-          <!-- 은은한 바늘 -->
-          <g id="speedNeedle" transform="rotate(-90 100 106)">
-            <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
-            <circle cx="100" cy="106" r="6" fill="#141c1a" stroke="#f5f7f6" stroke-width="2.5"/>
-          </g>
-        </svg>
-        <div class="gauge-center-info">
+      <div class="gauge-body">
+        <div class="gauge-svg-wrap">
+          <svg class="gauge-svg" viewBox="15 25 170 88" aria-label="Speed Gauge">
+            <!-- 정확한 180도 반원 눈금 Ticks (카드 밖 삐져나옴 원천 차단) -->
+            <g id="speedTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
+            <!-- 베이스 백그라운드 아크 (반원, 캡 라운드, 양끝 큰점 제거) -->
+            <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
+            <!-- 활성 아크 (빨강/화이트) - 0 상태에서는 opacity 0으로 점 제거 -->
+            <path id="speedArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease;"/>
+            <!-- 은은한 바늘 -->
+            <g id="speedNeedle" transform="rotate(-90 100 106)">
+              <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="100" cy="106" r="6" fill="#141c1a" stroke="#f5f7f6" stroke-width="2.5"/>
+            </g>
+          </svg>
+        </div>
+        <div class="gauge-info-wrap">
           <span class="gauge-num" id="speedVal">0</span>
           <span class="gauge-unit">km/h</span>
         </div>
@@ -643,21 +730,23 @@ body.is-connected .bottom-controls{
       <div class="gauge-card-header">
         <span class="kicker">MANIFOLD BOOST</span>
       </div>
-      <div class="gauge-svg-wrap">
-        <svg class="gauge-svg" viewBox="15 25 170 88" aria-label="Boost Gauge">
-          <!-- 정확한 180도 반원 눈금 Ticks -->
-          <g id="boostTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
-          <!-- 베이스 아크 -->
-          <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
-          <!-- 활성 아크 - 0 상태에서는 opacity 0으로 점 제거 -->
-          <path id="boostArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease;"/>
-          <!-- 은은한 바늘 -->
-          <g id="boostNeedle" transform="rotate(-90 100 106)">
-            <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
-            <circle cx="100" cy="106" r="6" fill="#141c1a" stroke="#f5f7f6" stroke-width="2.5"/>
-          </g>
-        </svg>
-        <div class="gauge-center-info">
+      <div class="gauge-body">
+        <div class="gauge-svg-wrap">
+          <svg class="gauge-svg" viewBox="15 25 170 88" aria-label="Boost Gauge">
+            <!-- 정확한 180도 반원 눈금 Ticks -->
+            <g id="boostTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
+            <!-- 베이스 아크 -->
+            <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
+            <!-- 활성 아크 - 0 상태에서는 opacity 0으로 점 제거 -->
+            <path id="boostArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease;"/>
+            <!-- 은은한 바늘 -->
+            <g id="boostNeedle" transform="rotate(-90 100 106)">
+              <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="100" cy="106" r="6" fill="#141c1a" stroke="#f5f7f6" stroke-width="2.5"/>
+            </g>
+          </svg>
+        </div>
+        <div class="gauge-info-wrap">
           <span class="gauge-num" id="boostVal">0.00</span>
           <span class="gauge-unit">bar</span>
         </div>
@@ -691,8 +780,8 @@ body.is-connected .bottom-controls{
       </div>
     </div>
 
-    <!-- ENGINE LOAD -->
-    <div class="stat-card" id="cardLoad">
+    <!-- ENGINE LOAD (3개일 때 2열 차지하도록 span-full 기본 적용) -->
+    <div class="stat-card span-full" id="cardLoad">
       <div class="stat-card-top">
         <span class="kicker">LOAD</span>
         <span class="stat-badge" id="badgeLoad">OK</span>
@@ -874,18 +963,20 @@ function updateBattery(volts) {
   }
 }
 
+let oilSupported = false;
+
 function updateEngineLoad(load) {
   const card = $('cardLoad');
   const valEl = $('valLoad');
   const badge = $('badgeLoad');
   if (load === null || load === undefined) {
     valEl.textContent = '--';
-    card.className = 'stat-card';
+    card.className = 'stat-card' + (oilSupported ? '' : ' span-full');
     badge.textContent = 'N/A NOT SUPPORTED';
     return;
   }
   valEl.textContent = Math.round(load);
-  card.className = 'stat-card';
+  card.className = 'stat-card' + (oilSupported ? '' : ' span-full');
 
   if (load >= 85) {
     card.classList.add('state-warn');
@@ -899,11 +990,16 @@ function updateOilTemp(temp) {
   const card = $('cardOil');
   const valEl = $('valOil');
   const badge = $('badgeOil');
+  const loadCard = $('cardLoad');
   if (temp === null || temp === undefined) {
+    oilSupported = false;
     card.style.display = 'none'; // 미지원 시 자동 숨김
+    if (loadCard) loadCard.classList.add('span-full');
     return;
   }
+  oilSupported = true;
   card.style.display = 'flex';
+  if (loadCard) loadCard.classList.remove('span-full');
   valEl.textContent = Math.round(temp);
   card.className = 'stat-card';
   if (temp >= 125) {
