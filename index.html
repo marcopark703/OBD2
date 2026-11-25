@@ -2,311 +2,1336 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#090d0c">
 <meta name="description" content="범용 BLE OBD-II 실시간 차량 대시보드">
 <link rel="manifest" href="manifest.webmanifest">
 <title>OBD Dashboard</title>
 <style>
-:root{color-scheme:dark;--bg:#090d0c;--panel:#191f1e;--panel2:#121817;--red:#ff3038;--red2:#d9232d;--white:#f5f7f6;--muted:#a9b1ae;--track:#424b48;--green:#00c900;--pad:clamp(10px,2.5vw,18px);--radius:clamp(12px,2vw,17px)}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--white);font-family:Inter,Roboto,"Noto Sans KR",system-ui,sans-serif}
-body{padding:clamp(5px,1vw,10px);padding-bottom:calc(env(safe-area-inset-bottom) + 8px)}
-.app{width:100%;max-width:980px;margin:0 auto;background:#0b100f;border-radius:22px;padding:var(--pad);min-height:calc(100dvh - 10px);display:flex;flex-direction:column;gap:clamp(9px,1.8vw,14px)}
-header{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.brand{min-width:0}.make{font-size:clamp(10px,1.7vw,13px);font-weight:900;color:var(--red);letter-spacing:-.2px}
-.model{font-size:clamp(23px,4vw,31px);font-weight:850;letter-spacing:-1px;line-height:1.15;margin-top:4px}
-.conn{font-size:clamp(10px,1.6vw,12px);font-weight:700;color:var(--green);background:#062008;padding:5px 9px;border-radius:99px;white-space:nowrap}
-.conn.off{color:#c0c6c3;background:#202725}
-.mainrow{display:grid;grid-template-columns:minmax(0,2.45fr) minmax(0,1fr);gap:9px}
-.card{background:var(--panel);border-radius:var(--radius);padding:clamp(10px,2vw,14px);min-width:0}
-.kicker{font-size:clamp(10px,1.6vw,12px);color:var(--muted);font-weight:450}
-.speedval{font-size:clamp(54px,10vw,76px);font-weight:950;letter-spacing:-3px;line-height:.95;font-variant-numeric:tabular-nums}
-.speeddial{width:min(100%,390px);height:auto;display:block;margin:2px auto -3px;overflow:visible}
-.speeddial .dial-bg{fill:none;stroke:#424b48;stroke-width:13;stroke-linecap:round}
-.speeddial .dial-progress{fill:none;stroke:#ff3038;stroke-width:13;stroke-linecap:round;pathLength:100;stroke-dasharray:0 100}
-.speeddial .dial-tick{stroke:#8d9692;stroke-width:2;stroke-linecap:round}
-.speeddial .dial-needle{stroke:#f5f7f6;stroke-width:4;stroke-linecap:round}
-.speedread{display:flex;align-items:baseline;justify-content:center;gap:7px;margin-top:-2px}
-.speedread .speedval{font-size:clamp(42px,8vw,62px)}
-.rpm-digital{display:flex;align-items:baseline;gap:7px}
-.rpm-digital .rpmval{font-size:clamp(38px,7vw,54px);margin:3px 0 0;line-height:1}
-.tach-scale{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;margin-top:11px;height:10px}
-.tach-scale i{display:block;border-radius:2px;background:#424b48}
-.tach-scale i.active{background:#ff3038}
-.tach-scale i.redline{background:#653438}
-.tach-scale i.redline.active{background:#ff3038}
-.rpmval{font-size:clamp(25px,5.4vw,36px);font-weight:900;letter-spacing:-1px;font-variant-numeric:tabular-nums;margin-top:13px}
-.unit{color:var(--red);font-size:clamp(11px,1.8vw,13px);font-weight:700}
-.track{height:4px;background:var(--track);border-radius:9px;overflow:hidden;margin-top:5px}
-.fill{height:100%;width:0;background:var(--red);border-radius:9px;transition:width .22s linear}
-.section{font-size:clamp(11px,1.8vw,13px);font-weight:850;color:var(--red);margin-top:0}
-.gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-.gaugecard{padding:clamp(8px,1.6vw,11px);display:flex;flex-direction:column;justify-content:space-between;min-height:clamp(150px,27vw,202px)}
-.gauge-title{font-size:clamp(9px,1.4vw,11px);color:var(--muted)}
-.gauge{width:100%;height:auto;display:block;margin:3px auto 0;overflow:visible}
-.gauge-value{font-size:clamp(25px,5vw,34px);font-weight:950;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1}
-.gauge-unit{font-size:clamp(10px,1.5vw,12px);font-weight:750}
-.bottom{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.bottom .value{font-size:clamp(20px,4vw,26px);font-weight:900;letter-spacing:-.5px;font-variant-numeric:tabular-nums;margin-top:5px}
-.footer{display:flex;justify-content:space-between;gap:8px;align-items:center;color:#77817d;font-size:9px;margin-top:auto}
-.controls{display:flex;gap:7px;flex-wrap:wrap}
-button{border:0;border-radius:9px;padding:9px 12px;background:#252e2b;color:#f5f7f6;font-size:12px;font-weight:750}
-button.primary{background:var(--red);color:white}button:disabled{opacity:.4}
-#diagnostics{display:none;background:#111817;border:1px solid #303a36;border-radius:12px;padding:10px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto;color:#c5ceca}
-/* Narrow phones / Galaxy Fold cover screen */
-@media(max-width:520px){
- .app{min-height:calc(100dvh - 10px);gap:clamp(12px,2.2vh,20px);padding:clamp(12px,3vw,17px)}
- .mainrow{grid-template-columns:minmax(0,1fr);gap:10px}
- .mainrow>.card:first-child{padding:clamp(14px,3.8vw,20px)}
- .speedval{font-size:clamp(54px,10vw,76px);letter-spacing:-3px}
- .speeddial{width:min(100%,360px);max-height:190px}
- .speedread .speedval{font-size:clamp(46px,12vw,66px)}
- .rpm-digital .rpmval{font-size:clamp(40px,10vw,58px)}
- .tach-scale{height:11px;gap:3px}
- .rpmval{font-size:clamp(34px,8vw,48px);margin-top:7px}
- .mainrow>.card:nth-child(2){display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}
- .mainrow>.card:nth-child(2) .kicker{grid-column:1}
- .mainrow>.card:nth-child(2) .rpmval{grid-column:2;grid-row:1/3;margin:0}
- .mainrow>.card:nth-child(2) .unit{grid-column:1;grid-row:2}
- .mainrow>.card:nth-child(2) .track{grid-column:1/-1}
- .gauges{gap:8px}
- .gaugecard{min-height:clamp(174px,23vh,220px);padding:clamp(10px,2.6vw,15px)}
- .gauge{max-height:clamp(95px,14vh,135px)}
- .gauge-value{font-size:clamp(27px,7vw,38px)}
- .bottom .card{padding:clamp(13px,3vw,18px);min-height:clamp(82px,11vh,108px)}
- .bottom .value{font-size:clamp(23px,6vw,32px)}
- .controls{gap:6px}
- .controls button{padding:8px 10px;font-size:11px}
- .footer{font-size:8px}
+:root{
+  color-scheme:dark;
+  --bg:#090d0c;
+  --panel:#111716;
+  --panel-border:#1c2523;
+  --card-bg:#141c1a;
+  --red:#ff2b37;
+  --red-glow:rgba(255,43,55,0.35);
+  --amber:#f59e0b;
+  --amber-glow:rgba(245,158,11,0.3);
+  --cyan:#38bdf8;
+  --cyan-glow:rgba(56,189,248,0.3);
+  --green:#10b981;
+  --green-glow:rgba(16,185,129,0.3);
+  --text-primary:#f5f7f6;
+  --text-secondary:#66736f;
+  --text-dim:#46504c;
+  --track-bg:#1f2926;
+  --radius-lg:18px;
+  --radius-md:12px;
+  --radius-sm:8px;
 }
-@media(max-width:370px){.gauges{gap:6px}.gaugecard{min-height:165px}.gauge-title{font-size:8px}}
-@media(orientation:landscape) and (max-height:520px){.app{max-width:1100px;min-height:auto}.gauges{grid-template-columns:repeat(3,minmax(0,1fr))}.gaugecard{min-height:125px}.speedval{font-size:clamp(48px,8vw,70px)}.gauge{max-height:78px}}
-@media(min-width:700px){.app{padding:18px}.gaugecard{min-height:190px}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:var(--bg);
+  color:var(--text-primary);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",system-ui,sans-serif;
+  user-select:none;
+}
+body{
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+/* 숫자 고정폭 tabular-nums 필수 적용 */
+.tabular, .num-val, .gauge-num, .rpm-digital, .stat-value{
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-0.5px;
+}
+
+/* 메인 컨테이너: 100dvh 스크롤 없이 한 화면에 딱 맞도록 Flex 컬럼 */
+.app{
+  width:100%;
+  max-width:960px;
+  height:100dvh;
+  max-height:100dvh;
+  padding:clamp(8px,1.8vh,16px) clamp(10px,2.2vw,18px);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(8px,1.4vh,13px);
+  overflow:hidden;
+}
+
+/* 1. 상단 미니멀 헤더 */
+header{
+  flex:0 0 auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  min-height:30px;
+}
+.brand-group{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.brand-title{
+  font-size:clamp(11px,1.8vh,13px);
+  font-weight:900;
+  letter-spacing:1px;
+  color:var(--text-secondary);
+}
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:clamp(10px,1.5vh,11px);
+  font-weight:700;
+  padding:3px 9px;
+  border-radius:99px;
+  background:#141c1a;
+  border:1px solid #1c2724;
+  color:var(--text-secondary);
+  transition:all .3s ease;
+}
+.status-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#6b7280;
+  transition:all .3s ease;
+}
+.status-pill.connected{
+  background:rgba(16,185,129,0.12);
+  border-color:rgba(16,185,129,0.3);
+  color:var(--green);
+}
+.status-pill.connected .status-dot{
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+  animation:pulse-dot 2s infinite;
+}
+.status-pill.demo{
+  background:rgba(245,158,11,0.12);
+  border-color:rgba(245,158,11,0.3);
+  color:var(--amber);
+}
+.status-pill.demo .status-dot{
+  background:var(--amber);
+  box-shadow:0 0 8px var(--amber);
+}
+@keyframes pulse-dot{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.5;transform:scale(.85)}
+}
+
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.icon-btn{
+  background:transparent;
+  border:1px solid transparent;
+  color:var(--text-secondary);
+  border-radius:50%;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.icon-btn:hover, .icon-btn:active{
+  background:var(--card-bg);
+  border-color:var(--panel-border);
+  color:var(--text-primary);
+}
+.icon-btn svg{width:18px;height:18px;fill:currentColor}
+
+/* 2. 상단 풀-폭 가로형 RPM 세그먼트 바 */
+.rpm-section{
+  flex:0 0 auto;
+  background:var(--card-bg);
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius-md);
+  padding:clamp(8px,1.5vh,12px) clamp(12px,2vw,16px);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(6px,1vh,9px);
+}
+.rpm-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+}
+.kicker{
+  font-size:clamp(10px,1.4vh,11px);
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--text-secondary);
+  text-transform:uppercase;
+}
+.rpm-val-group{
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+}
+.rpm-digital{
+  font-size:clamp(22px,3.8vh,32px);
+  font-weight:900;
+  color:var(--text-primary);
+  line-height:1;
+}
+.rpm-unit{
+  font-size:clamp(10px,1.4vh,12px);
+  font-weight:700;
+  color:var(--text-secondary);
+}
+
+/* 세그먼트 RPM 바 (가로형) */
+.rpm-bar-container{
+  width:100%;
+  height:clamp(14px,2.2vh,20px);
+  display:flex;
+  gap:3px;
+  align-items:stretch;
+  background:#090d0c;
+  padding:3px;
+  border-radius:6px;
+  border:1px solid #1b2422;
+}
+.rpm-segment{
+  flex:1;
+  background:var(--track-bg);
+  border-radius:2px;
+  transition:background .06s ease, box-shadow .06s ease;
+}
+.rpm-segment.active.norm{
+  background:#f5f7f6;
+  box-shadow:0 0 6px rgba(245,247,246,0.5);
+}
+.rpm-segment.active.warn{
+  background:var(--amber);
+  box-shadow:0 0 6px var(--amber-glow);
+}
+.rpm-segment.active.redzone{
+  background:var(--red);
+  box-shadow:0 0 8px var(--red-glow);
+}
+.rpm-ticks-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:8px;
+  font-weight:700;
+  color:var(--text-dim);
+  padding:0 2px;
+  margin-top:-2px;
+}
+.rpm-ticks-label span.red{color:rgba(255,43,55,0.7)}
+
+/* 3. 중단 주력 듀얼 게이지 (SPEED + BOOST) */
+.main-gauges-row{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(8px,1.6vw,12px);
+}
+.gauge-card{
+  background:var(--card-bg);
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius-lg);
+  padding:clamp(8px,1.4vh,14px) clamp(10px,1.8vw,14px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+  overflow:hidden;
+}
+.gauge-card-header{
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.gauge-svg-wrap{
+  position:relative;
+  width:100%;
+  max-width:280px;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.gauge-svg{
+  width:100%;
+  height:100%;
+  max-height:clamp(120px,26vh,190px);
+  display:block;
+  overflow:visible;
+}
+
+/* 게이지 내부 중앙 텍스트 */
+.gauge-center-info{
+  position:absolute;
+  bottom:clamp(4px,1.2vh,12px);
+  left:0;
+  right:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  pointer-events:none;
+}
+.gauge-num{
+  font-size:clamp(38px,8vh,66px);
+  font-weight:950;
+  line-height:.95;
+  color:var(--text-primary);
+  letter-spacing:-2px;
+}
+.gauge-unit{
+  font-size:clamp(11px,1.7vh,13px);
+  font-weight:800;
+  color:var(--text-secondary);
+  letter-spacing:.5px;
+  margin-top:2px;
+}
+
+/* 4. 하단 보조 지표 (숫자 중심 컴팩트 카드) */
+.sub-stats-row{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(85px, 1fr));
+  gap:clamp(6px,1.4vw,10px);
+}
+.stat-card{
+  background:var(--card-bg);
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius-md);
+  padding:clamp(8px,1.3vh,12px) clamp(8px,1.4vw,12px);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  position:relative;
+  transition:border-color .3s ease, box-shadow .3s ease;
+  min-height:clamp(64px,10vh,82px);
+}
+.stat-card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.stat-badge{
+  font-size:8px;
+  font-weight:800;
+  padding:1px 5px;
+  border-radius:4px;
+  background:#1a2321;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  transition:all .3s ease;
+}
+.stat-value-group{
+  display:flex;
+  align-items:baseline;
+  gap:3px;
+  margin-top:clamp(2px,0.5vh,5px);
+}
+.stat-value{
+  font-size:clamp(19px,3.2vh,27px);
+  font-weight:900;
+  line-height:1;
+  color:var(--text-primary);
+  transition:color .3s ease;
+}
+.stat-unit{
+  font-size:clamp(9px,1.4vh,11px);
+  font-weight:700;
+  color:var(--text-secondary);
+}
+
+/* Exception-based UI: 임계치 반응 상태 클래스 */
+.stat-card.state-cold{
+  border-color:rgba(56,189,248,0.4);
+}
+.stat-card.state-cold .stat-badge{
+  background:rgba(56,189,248,0.18);
+  color:var(--cyan);
+}
+.stat-card.state-cold .stat-value{
+  color:var(--cyan);
+}
+
+.stat-card.state-warn{
+  border-color:rgba(245,158,11,0.5);
+  box-shadow:0 0 10px rgba(245,158,11,0.15);
+}
+.stat-card.state-warn .stat-badge{
+  background:rgba(245,158,11,0.2);
+  color:var(--amber);
+}
+.stat-card.state-warn .stat-value{
+  color:var(--amber);
+}
+
+.stat-card.state-danger{
+  border-color:rgba(255,43,55,0.7);
+  box-shadow:0 0 14px var(--red-glow);
+  animation:border-pulse 1.4s infinite;
+}
+.stat-card.state-danger .stat-badge{
+  background:rgba(255,43,55,0.25);
+  color:var(--red);
+}
+.stat-card.state-danger .stat-value{
+  color:var(--red);
+}
+@keyframes border-pulse{
+  0%,100%{border-color:rgba(255,43,55,0.7)}
+  50%{border-color:rgba(255,43,55,0.25)}
+}
+
+/* 5. 미연결 시 표시되는 하단 기본 컨트롤 바 */
+.bottom-controls{
+  flex:0 0 auto;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+}
+.btn{
+  border:0;
+  border-radius:var(--radius-sm);
+  padding:clamp(8px,1.4vh,11px) clamp(12px,2vw,16px);
+  background:#1e2926;
+  color:var(--text-primary);
+  font-size:clamp(11px,1.6vh,13px);
+  font-weight:750;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:all .2s ease;
+}
+.btn:hover{background:#2a3834}
+.btn:active{transform:scale(0.98)}
+.btn.primary{
+  background:var(--red);
+  color:#fff;
+  box-shadow:0 2px 10px var(--red-glow);
+}
+.btn.primary:hover{background:#ff4752}
+.btn.demo-btn{
+  background:#262312;
+  color:var(--amber);
+  border:1px solid rgba(245,158,11,0.3);
+}
+.btn.demo-btn:hover{background:#363016}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* 연결 완료 시 컨트롤 바 숨김 */
+body.is-connected .bottom-controls{
+  display:none;
+}
+
+/* 6. 설정 모달 / 드로어 오버레이 */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(6px);
+  z-index:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  opacity:0;
+  transition:opacity .2s ease;
+}
+.modal-backdrop.open{
+  display:flex;
+  opacity:1;
+}
+.modal-sheet{
+  width:100%;
+  max-width:420px;
+  background:#111816;
+  border:1px solid #23312d;
+  border-radius:20px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.8);
+  transform:translateY(10px);
+  transition:transform .2s ease;
+}
+.modal-backdrop.open .modal-sheet{
+  transform:translateY(0);
+}
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #1a2522;
+  padding-bottom:10px;
+}
+.modal-title{
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.5px;
+  color:var(--text-primary);
+}
+.modal-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.modal-grid .btn{
+  width:100%;
+  padding:11px;
+}
+#diagnosticsBox{
+  display:none;
+  background:#090d0c;
+  border:1px solid #202b28;
+  border-radius:10px;
+  padding:10px;
+  font-size:10px;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  white-space:pre-wrap;
+  word-break:break-all;
+  max-height:140px;
+  overflow-y:auto;
+  color:#94a3b8;
+}
+
+/* Fold5 전면 화면 및 세로 좁은 폰 최적화 */
+@media(max-width:480px){
+  .app{
+    padding:8px 10px;
+    gap:8px;
+  }
+  .rpm-section{
+    padding:7px 10px;
+    gap:5px;
+  }
+  .gauge-card{
+    padding:8px 8px 10px 8px;
+  }
+  .gauge-svg{
+    max-height:clamp(110px, 24vh, 150px);
+  }
+  .gauge-num{
+    font-size:clamp(34px, 7.5vh, 48px);
+  }
+  .stat-card{
+    padding:7px 8px;
+    min-height:58px;
+  }
+}
+
+/* 가로 모드 (Landscape) / 태블릿 최적화 */
+@media(orientation:landscape) and (max-height:550px){
+  .app{
+    padding:6px 14px;
+    gap:6px;
+  }
+  .rpm-section{
+    padding:5px 12px;
+    gap:4px;
+  }
+  .rpm-bar-container{
+    height:13px;
+  }
+  .gauge-svg{
+    max-height:100px;
+  }
+  .gauge-num{
+    font-size:36px;
+  }
+  .stat-card{
+    min-height:52px;
+    padding:5px 10px;
+  }
+}
 </style>
 </head>
 <body>
-<main class="app">
-<header>
- <div class="brand"><div class="make" id="make">VEHICLE</div><div class="model" id="model">OBD DASHBOARD</div></div>
- <div class="conn off" id="connection">DISCONNECTED</div>
-</header>
 
-<section class="mainrow">
- <div class="card speed-card">
-  <div class="kicker">SPEED</div>
-  <svg class="speeddial" viewBox="0 0 240 150" aria-label="Speedometer">
-   <path class="dial-bg" d="M25 126 A95 95 0 0 1 215 126"/>
-   <path id="speedArc" class="dial-progress" d="M25 126 A95 95 0 0 1 215 126"/>
-   <g id="speedTicks"></g>
-   <path id="speedNeedle" class="dial-needle" d="M120 126 L120 42" transform="rotate(-90 120 126)"/>
-   <circle cx="120" cy="126" r="7" fill="#ff3038"/>
-  </svg>
-  <div class="speedread"><span class="speedval" id="speed">--</span><span class="unit">km/h</span></div>
- </div>
- <div class="card rpm-card">
-  <div class="kicker">ENGINE RPM · TACHOMETER</div>
-  <div class="rpm-digital"><div class="rpmval" id="rpm">----</div><span class="unit">rpm</span></div>
-  <div class="tach-scale" id="tachScale" aria-label="RPM scale"></div>
-  <div class="track"><div class="fill" id="rpmbar"></div></div>
- </div>
-</section>
+<main class="app" id="appMain">
+  <!-- 1. 미니멀 상단 바 -->
+  <header>
+    <div class="brand-group">
+      <span class="brand-title">OBD // DASH</span>
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot"></span>
+        <span id="statusText">DISCONNECTED</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="openSettingsBtn" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.44.17-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.09-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.09.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+    </div>
+  </header>
 
-<div class="section">ENGINE CONDITION</div>
-<section class="gauges">
- <div class="card gaugecard">
-  <div class="gauge-title">COOLANT</div>
-  <svg class="gauge" viewBox="0 0 200 128" aria-label="Coolant gauge">
-   <path d="M20 108 A80 80 0 0 1 180 108" fill="none" stroke="#424b48" stroke-width="15" stroke-linecap="round"/>
-   <path id="coolantArc" d="M20 108 A80 80 0 0 1 180 108" fill="none" stroke="#ff3038" stroke-width="15" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
-   <path id="coolantNeedle" d="M100 108 L100 30" stroke="#f6f7f7" stroke-width="5" stroke-linecap="round" transform="rotate(-90 100 108)"/>
-   <circle cx="100" cy="108" r="9" fill="#ff3038"/>
-  </svg>
-  <div><span class="gauge-value" id="coolant">--°</span><span class="gauge-unit"> C</span></div>
- </div>
- <div class="card gaugecard">
-  <div class="gauge-title">OIL TEMP</div>
-  <svg class="gauge" viewBox="0 0 200 128" aria-label="Oil temperature gauge">
-   <path d="M20 108 A80 80 0 0 1 180 108" fill="none" stroke="#424b48" stroke-width="15" stroke-linecap="round"/>
-   <path id="oilArc" d="M20 108 A80 80 0 0 1 180 108" fill="none" stroke="#ff3038" stroke-width="15" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
-   <path id="oilNeedle" d="M100 108 L100 30" stroke="#f6f7f7" stroke-width="5" stroke-linecap="round" transform="rotate(-90 100 108)"/>
-   <circle cx="100" cy="108" r="9" fill="#ff3038"/>
-  </svg>
-  <div><span class="gauge-value" id="oil">N/A</span><span class="gauge-unit" id="oilUnit">NOT SUPPORTED</span></div>
- </div>
- <div class="card gaugecard">
-  <div class="gauge-title">BOOST</div>
-  <svg class="gauge" viewBox="0 0 200 128" aria-label="Boost gauge">
-   <path d="M20 108 A80 80 0 0 1 180 108" fill="none" stroke="#424b48" stroke-width="15" stroke-linecap="round"/>
-   <path id="boostArc" d="M20 108 A80 80 0 0 1 180 108" fill="none" stroke="#ff3038" stroke-width="15" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
-   <path id="boostNeedle" d="M100 108 L100 30" stroke="#f6f7f7" stroke-width="5" stroke-linecap="round" transform="rotate(-90 100 108)"/>
-   <circle cx="100" cy="108" r="9" fill="#ff3038"/>
-  </svg>
-  <div><span class="gauge-value" id="boost">--</span><span class="gauge-unit"> bar</span></div>
- </div>
-</section>
+  <!-- 2. 상단 풀-폭 세그먼트 RPM 바 -->
+  <section class="rpm-section">
+    <div class="rpm-header">
+      <span class="kicker">ENGINE REVS</span>
+      <div class="rpm-val-group">
+        <span class="rpm-digital" id="rpmVal">0</span>
+        <span class="rpm-unit">RPM</span>
+      </div>
+    </div>
+    <div class="rpm-bar-container" id="rpmBar">
+      <!-- JS에서 세그먼트 요소 36개 생성 -->
+    </div>
+    <div class="rpm-ticks-label">
+      <span>0</span>
+      <span>2</span>
+      <span>4</span>
+      <span>5.5</span>
+      <span class="red">6.5 RED</span>
+      <span class="red">8k</span>
+    </div>
+  </section>
 
-<section class="bottom">
- <div class="card"><div class="kicker">BATTERY</div><div class="value" id="voltage">--.- V</div></div>
- <div class="card"><div class="kicker">ENGINE LOAD</div><div class="value" id="load">--%</div></div>
-</section>
+  <!-- 3. 중단 주력 듀얼 게이지 (BOOST & SPEED) -->
+  <section class="main-gauges-row">
+    <!-- SPEED 게이지 -->
+    <div class="gauge-card" id="speedCard">
+      <div class="gauge-card-header">
+        <span class="kicker">VEHICLE SPEED</span>
+      </div>
+      <div class="gauge-svg-wrap">
+        <svg class="gauge-svg" viewBox="0 0 200 125" aria-label="Speed Gauge">
+          <!-- 정확한 180도 반원 눈금 Ticks (카드 밖 삐져나옴 원천 차단) -->
+          <g id="speedTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
+          <!-- 베이스 백그라운드 아크 (반원, 캡 라운드, 양끝 큰점 제거) -->
+          <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
+          <!-- 활성 아크 (빨강/화이트) -->
+          <path id="speedArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+          <!-- 은은한 바늘 -->
+          <g id="speedNeedle" transform="rotate(-90 100 106)">
+            <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="100" cy="106" r="6" fill="#141c1a" stroke="#f5f7f6" stroke-width="2.5"/>
+          </g>
+        </svg>
+        <div class="gauge-center-info">
+          <span class="gauge-num" id="speedVal">0</span>
+          <span class="gauge-unit">km/h</span>
+        </div>
+      </div>
+    </div>
 
-<div class="controls">
- <button class="primary" id="connect">CONNECT OBD-II</button>
- <button id="fullscreen">FULL SCREEN</button>
- <button id="wake">KEEP SCREEN ON</button>
- <button id="settings">CONNECTION LOG</button>
- <button id="disconnect" disabled>DISCONNECT</button>
-</div>
-<pre id="diagnostics"></pre>
-<footer class="footer"><span id="adapter">GENERIC BLE OBD-II · STANDARD PID</span><span id="lastUpdate">WAITING FOR DATA</span></footer>
+    <!-- BOOST 게이지 -->
+    <div class="gauge-card" id="boostCard">
+      <div class="gauge-card-header">
+        <span class="kicker">MANIFOLD BOOST</span>
+      </div>
+      <div class="gauge-svg-wrap">
+        <svg class="gauge-svg" viewBox="0 0 200 125" aria-label="Boost Gauge">
+          <!-- 정확한 180도 반원 눈금 Ticks -->
+          <g id="boostTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
+          <!-- 베이스 아크 -->
+          <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
+          <!-- 활성 아크 -->
+          <path id="boostArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+          <!-- 은은한 바늘 -->
+          <g id="boostNeedle" transform="rotate(-90 100 106)">
+            <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="100" cy="106" r="6" fill="#141c1a" stroke="#f5f7f6" stroke-width="2.5"/>
+          </g>
+        </svg>
+        <div class="gauge-center-info">
+          <span class="gauge-num" id="boostVal">0.00</span>
+          <span class="gauge-unit">bar</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 하단 보조 지표 (컴팩트 카드 + Exception-based UI) -->
+  <section class="sub-stats-row">
+    <!-- COOLANT -->
+    <div class="stat-card" id="cardCoolant">
+      <div class="stat-card-top">
+        <span class="kicker">COOLANT</span>
+        <span class="stat-badge" id="badgeCoolant">OK</span>
+      </div>
+      <div class="stat-value-group">
+        <span class="stat-value" id="valCoolant">--</span>
+        <span class="stat-unit">°C</span>
+      </div>
+    </div>
+
+    <!-- BATTERY -->
+    <div class="stat-card" id="cardVoltage">
+      <div class="stat-card-top">
+        <span class="kicker">BATTERY</span>
+        <span class="stat-badge" id="badgeVoltage">OK</span>
+      </div>
+      <div class="stat-value-group">
+        <span class="stat-value" id="valVoltage">--.-</span>
+        <span class="stat-unit">V</span>
+      </div>
+    </div>
+
+    <!-- ENGINE LOAD -->
+    <div class="stat-card" id="cardLoad">
+      <div class="stat-card-top">
+        <span class="kicker">LOAD</span>
+        <span class="stat-badge" id="badgeLoad">OK</span>
+      </div>
+      <div class="stat-value-group">
+        <span class="stat-value" id="valLoad">--</span>
+        <span class="stat-unit">%</span>
+      </div>
+    </div>
+
+    <!-- OIL TEMP (미지원 시 자동 hidden) -->
+    <div class="stat-card" id="cardOil" style="display:none">
+      <div class="stat-card-top">
+        <span class="kicker">OIL TEMP</span>
+        <span class="stat-badge" id="badgeOil">OK</span>
+      </div>
+      <div class="stat-value-group">
+        <span class="stat-value" id="valOil">--</span>
+        <span class="stat-unit">°C</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 미연결 시 표시되는 하단 기본 컨트롤 바 (연결되면 자동 숨김) -->
+  <div class="bottom-controls" id="bottomControls">
+    <button class="btn primary" id="connectBtn">CONNECT OBD-II</button>
+    <button class="btn demo-btn" id="demoToggleBtn">DEMO MODE</button>
+  </div>
 </main>
+
+<!-- 6. 설정 & 제어 모달/드로어 -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-title">DASHBOARD CONTROLS</span>
+      <button class="icon-btn" id="closeSettingsBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="modal-grid">
+      <button class="btn" id="modalDemoBtn">DEMO MODE: OFF</button>
+      <button class="btn" id="fullscreenBtn">FULL SCREEN</button>
+      <button class="btn" id="wakeLockBtn">KEEP SCREEN ON</button>
+      <button class="btn" id="toggleLogBtn">CONNECTION LOG</button>
+      <button class="btn" id="disconnectBtn" style="grid-column:1/-1;background:#351316;color:var(--red);" disabled>DISCONNECT OBD-II</button>
+    </div>
+    <pre id="diagnosticsBox"></pre>
+  </div>
+</div>
+
 <script>
 (() => {
-const $=id=>document.getElementById(id);
-const UUIDS=[
- {name:"ELM BLE FFF0",service:"0000fff0-0000-1000-8000-00805f9b34fb",notify:"0000fff1-0000-1000-8000-00805f9b34fb",write:"0000fff2-0000-1000-8000-00805f9b34fb"},
- {name:"ELM BLE FFE0",service:"0000ffe0-0000-1000-8000-00805f9b34fb",notify:"0000ffe1-0000-1000-8000-00805f9b34fb",write:"0000ffe1-0000-1000-8000-00805f9b34fb"},
- {name:"NORDIC UART",service:"6e400001-b5a3-f393-e0a9-e50e24dcca9e",notify:"6e400003-b5a3-f393-e0a9-e50e24dcca9e",write:"6e400002-b5a3-f393-e0a9-e50e24dcca9e"},
- {name:"CUSTOM 18F0",service:"000018f0-0000-1000-8000-00805f9b34fb",notify:"00002af0-0000-1000-8000-00805f9b34fb",write:"00002af1-0000-1000-8000-00805f9b34fb"}
-];
-const optionalServices=[...new Set([...UUIDS.map(x=>x.service),"0000180a-0000-1000-8000-00805f9b34fb"])];
-let device=null,server=null,rx=null,tx=null,notifyBuffer="",pending=null,connected=false,polling=false,wakeLock=null,logLines=[];
-let supported={},oilPidChecked=false,speedNeedleNow=-90,speedNeedleTarget=-90;
-const log=s=>{logLines.unshift(new Date().toLocaleTimeString()+" "+s);logLines=logLines.slice(0,24);$("diagnostics").textContent=logLines.join("\n")};
-const setConn=(s,on=false)=>{$("connection").textContent=s;$("connection").classList.toggle("off",!on)};
-const delay=ms=>new Promise(r=>setTimeout(r,ms));
-function onNotify(e){notifyBuffer+=new TextDecoder().decode(e.target.value);if(notifyBuffer.includes(">")&&pending){const p=pending;pending=null;const out=notifyBuffer;notifyBuffer="";p(out)}}
-async function raw(cmd,timeout=1400){
- if(!tx)throw Error("BLE write characteristic unavailable");
- if(pending)throw Error("Previous OBD command still pending");
- return new Promise(async(resolve,reject)=>{
-  pending=resolve;notifyBuffer="";
-  const timer=setTimeout(()=>{if(pending){const p=pending;pending=null;p(notifyBuffer||"TIMEOUT")}},timeout);
-  try{
-   const data=new TextEncoder().encode(cmd+"\r");
-   if(tx.properties.writeWithoutResponse && !tx.properties.write) await tx.writeValueWithoutResponse(data);
-   else await tx.writeValue(data);
-   const original=pending;pending=s=>{clearTimeout(timer);original(s)};
-  }catch(e){clearTimeout(timer);pending=null;reject(e)}
- });
-}
-async function cmd(c){const r=await raw(c);log(">"+c+"  "+r.replace(/[\r\n]/g," ").trim());return r}
-async function findProfile(gatt){
- for(const p of UUIDS){
-  try{
-   const svc=await gatt.getPrimaryService(p.service);
-   const n=await svc.getCharacteristic(p.notify);
-   let w;
-   try{w=await svc.getCharacteristic(p.write)}catch(e){w=n}
-   if(!(n.properties.notify||n.properties.indicate))continue;
-   if(!(w.properties.write||w.properties.writeWithoutResponse))continue;
-   rx=n;tx=w;log("GATT profile: "+p.name);$("adapter").textContent="BLE · "+p.name;return true;
-  }catch(e){}
- }
- // Fallback: inspect known permitted services and infer notify/write characteristics.
- for(const sid of optionalServices){
-  try{
-   const svc=await gatt.getPrimaryService(sid);
-   const chars=await svc.getCharacteristics();
-   const n=chars.find(c=>c.properties.notify||c.properties.indicate);
-   const w=chars.find(c=>c.properties.write||c.properties.writeWithoutResponse);
-   if(n&&w){rx=n;tx=w;log("GATT custom profile: "+sid);$("adapter").textContent="BLE · CUSTOM GATT";return true}
-  }catch(e){}
- }
- return false;
-}
-function bytesFor(resp,pid){
- const clean=resp.replace(/SEARCHING\.\.\./gi,"").replace(/[^0-9a-f]/gi,"").toUpperCase();
- const key=("41"+pid).toUpperCase(),i=clean.indexOf(key);if(i<0)return null;
- const pairs=clean.slice(i+key.length).match(/.{2}/g)||[];
- return pairs.map(x=>parseInt(x,16)).filter(Number.isFinite);
-}
-async function pid(pid,n,fn){
- const r=await cmd("01"+pid),b=bytesFor(r,pid);
- if(!b||b.length<n){supported[pid]=false;return null}
- supported[pid]=true;return fn(...b);
-}
-function put(id,val,unit=""){if(val===null||val===undefined){$(id).textContent="—";return}$(id).textContent=val+unit}
-function initScales(){
- const ticks=$("speedTicks"); if(ticks.childElementCount===0){
-  for(let i=0;i<=10;i++){const a=(-90+i*18)*Math.PI/180,x1=120+Math.cos(a)*83,y1=126+Math.sin(a)*83,x2=120+Math.cos(a)*91,y2=126+Math.sin(a)*91;const l=document.createElementNS("http://www.w3.org/2000/svg","line");l.setAttribute("x1",x1);l.setAttribute("y1",y1);l.setAttribute("x2",x2);l.setAttribute("y2",y2);l.setAttribute("class","dial-tick");ticks.appendChild(l)}
- }
- const scale=$("tachScale");if(scale.childElementCount===0){for(let i=0;i<16;i++){const e=document.createElement("i");if(i>=13)e.className="redline";scale.appendChild(e)}}
-}
-function animateSpeedNeedle(){speedNeedleNow+=(speedNeedleTarget-speedNeedleNow)*.22;$("speedNeedle").setAttribute("transform",`rotate(${speedNeedleNow} 120 126)`);requestAnimationFrame(animateSpeedNeedle)}
-function updateSpeed(v){
- if(v===null){put("speed",null);$("speedArc").style.strokeDasharray="0 100";return}
- const n=Math.max(0,Math.min(220,v));put("speed",Math.round(v));const ratio=n/220;$("speedArc").style.strokeDasharray=`${ratio*100} 100`;speedNeedleTarget=-90+ratio*180;
-}
-function updateRpm(v){
- put("rpm",v===null?null:Math.round(v).toLocaleString("en-US"));const ratio=v===null?0:Math.max(0,Math.min(1,v/5000));$("rpmbar").style.width=(ratio*100)+"%";
- [...$("tachScale").children].forEach((el,i)=>el.classList.toggle("active",v!==null&&i<Math.round(ratio*16)));
-}
-function gauge(prefix,val,min,max,fmt){
- if(val===null||!Number.isFinite(val)){put(prefix,"—");$(prefix+"Arc").setAttribute("stroke-dasharray","0 100");return}
- const ratio=Math.max(0,Math.min(1,(val-min)/(max-min)));
- $(prefix+"Arc").setAttribute("stroke-dasharray",`${ratio*100} 100`);
- $(prefix+"Needle").setAttribute("transform",`rotate(${-90+ratio*180} 100 108)`);
- put(prefix,fmt(val));
-}
-async function readVoltage(){const r=await cmd("ATRV"),m=r.match(/(\d+(?:\.\d+)?)\s*V/i);return m?Number(m[1]):null}
-async function poll(){
- if(polling)return;polling=true;
- // Priority: speed and RPM every cycle. Slow-changing PIDs are staggered.
- let slowIndex=0;const slowTasks=[
-  async()=>{const v=await pid("05",1,a=>a-40);gauge("coolant",v,40,120,x=>Math.round(x)+"°")},
-  async()=>{const v=await pid("0B",1,a=>a);return v},
-  async()=>{const v=await pid("33",1,a=>a);return v},
-  async()=>{const v=await pid("04",1,a=>Math.round(a*100/255));put("load",v===null?null:v,"%")},
-  async()=>{const v=await readVoltage();put("voltage",v===null?null:v.toFixed(1)+" V")}
- ];
- let map=null,baro=null;
- try{
-  while(connected){
-   const speed=await pid("0D",1,a=>a);updateSpeed(speed);
-   const rpm=await pid("0C",2,(a,b)=>Math.round((a*256+b)/4));updateRpm(rpm);
-   // one low-priority query per loop; boost is derived when MAP and BARO are both known
-   try{
-    const t=slowTasks[slowIndex]();slowIndex=(slowIndex+1)%slowTasks.length;
-    const result=await t;
-    if(slowIndex===2)map=result;
-    if(slowIndex===3)baro=result;
-    if(map!==null&&baro!==null){const boost=(map-baro)/100;gauge("boost",boost,0,2.5,x=>x.toFixed(2));}
-   }catch(e){log("PID read: "+e.message)}
-   $("lastUpdate").textContent="UPDATED "+new Date().toLocaleTimeString("ko-KR",{hour12:false});
-   await delay(120);
+const $ = id => document.getElementById(id);
+
+// --- 1. SVG 눈금(Tick) 생성기 (각도 180° ~ 0° 정확 일치) ---
+function createTicks(containerId, count = 11, rIn = 63, rOut = 70) {
+  const g = $(containerId);
+  if (!g) return;
+  const cx = 100, cy = 106;
+  let html = '';
+  for (let i = 0; i <= count; i++) {
+    // 0 -> 180deg (좌), count -> 0deg (우)
+    const deg = 180 - (i * (180 / count));
+    const rad = deg * (Math.PI / 180);
+    const x1 = (cx - rIn * Math.cos(rad)).toFixed(1);
+    const y1 = (cy - rIn * Math.sin(rad)).toFixed(1);
+    const x2 = (cx - rOut * Math.cos(rad)).toFixed(1);
+    const y2 = (cy - rOut * Math.sin(rad)).toFixed(1);
+    html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" />`;
   }
- }catch(e){log("Polling stopped: "+e.message)}
- polling=false;
+  g.innerHTML = html;
 }
-async function start(){
- if(!navigator.bluetooth){throw Error("이 브라우저는 Web Bluetooth를 지원하지 않습니다. Android의 지원 브라우저에서 HTTPS로 실행하세요.")}
- setConn("SEARCHING BLE…");
- // Brand-agnostic discovery: user chooses any BLE device visible to the browser.
- device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices});
- log("Selected BLE device: "+(device.name||"Unnamed device"));
- device.addEventListener("gattserverdisconnected",()=>{
-  connected=false;setConn("DISCONNECTED");$("disconnect").disabled=true;$("connect").disabled=false;log("GATT disconnected");
- });
- server=await device.gatt.connect();log("GATT connected");
- if(!await findProfile(server))throw Error("알려진 BLE OBD 서비스/특성을 찾지 못했습니다. 이 어댑터는 다른 BLE 프로토콜일 수 있습니다.");
- await rx.startNotifications();rx.addEventListener("characteristicvaluechanged",onNotify);
- connected=true;
- for(const c of ["ATZ","ATE0","ATL0","ATS0","ATH0","ATSP0"]){await cmd(c);await delay(120)}
- setConn("BLE CONNECTED",true);$("disconnect").disabled=false;$("connect").disabled=true;
- // Identify ECU support map using standard supported-PID bitmap.
- try{const r=await cmd("0100");log("Standard PID discovery response received");}catch(e){log("PID discovery: "+e.message)}
- if(!oilPidChecked){oilPidChecked=true;try{const oil=await pid("5C",1,a=>a-40);if(oil===null){$("oil").textContent="N/A";$("oilUnit").textContent="NOT SUPPORTED";log("Oil temperature PID 015C not supported by ECU");}else{gauge("oil",oil,50,150,x=>Math.round(x)+"°");$("oilUnit").textContent="°C";}}catch(e){$("oil").textContent="N/A";$("oilUnit").textContent="NOT SUPPORTED";log("Oil temperature unavailable: "+e.message)}}
- poll();
+createTicks('speedTicks', 12, 60, 68);
+createTicks('boostTicks', 10, 60, 68);
+
+// --- 2. 가로형 세그먼트 RPM 바 생성기 ---
+const TOTAL_SEGMENTS = 36;
+const rpmBarContainer = $('rpmBar');
+for (let i = 0; i < TOTAL_SEGMENTS; i++) {
+  const seg = document.createElement('div');
+  seg.className = 'rpm-segment';
+  // 0~65% norm(white), 65~82% warn(amber), 82~100% redzone
+  const ratio = i / TOTAL_SEGMENTS;
+  if (ratio >= 0.82) seg.dataset.type = 'redzone';
+  else if (ratio >= 0.65) seg.dataset.type = 'warn';
+  else seg.dataset.type = 'norm';
+  rpmBarContainer.appendChild(seg);
 }
-$("connect").onclick=async()=>{ $("connect").disabled=true;try{await start()}catch(e){log("ERROR "+e.name+": "+e.message);setConn("CONNECTION FAILED");$("connect").disabled=false;if(device?.gatt?.connected)device.gatt.disconnect()}};
-$("disconnect").onclick=()=>{connected=false;if(device?.gatt?.connected)device.gatt.disconnect();setConn("DISCONNECTED");$("connect").disabled=false;$("disconnect").disabled=true};
-$("fullscreen").onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){log("Fullscreen unavailable: "+e.message)}};
-$("wake").onclick=async()=>{try{if(!("wakeLock"in navigator))throw Error("Wake Lock 미지원 브라우저");wakeLock=await navigator.wakeLock.request("screen");$("wake").textContent="SCREEN ON ✓";wakeLock.addEventListener("release",()=>$("wake").textContent="KEEP SCREEN ON")}catch(e){log("Wake Lock: "+e.message)}};
-$("settings").onclick=()=>{$("diagnostics").style.display=$("diagnostics").style.display==="block"?"none":"block"};
-if("serviceWorker"in navigator&&location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>log("SW registration: "+e.message)))}
-initScales();requestAnimationFrame(animateSpeedNeedle);
-if(!navigator.bluetooth){$("connect").disabled=true;setConn("WEB BLUETOOTH UNAVAILABLE")}
+const rpmSegments = rpmBarContainer.children;
+
+function updateRpmBar(rpm, maxRpm = 8000) {
+  const activeCount = Math.min(TOTAL_SEGMENTS, Math.floor((rpm / maxRpm) * TOTAL_SEGMENTS));
+  for (let i = 0; i < TOTAL_SEGMENTS; i++) {
+    const seg = rpmSegments[i];
+    if (i < activeCount) {
+      seg.className = `rpm-segment active ${seg.dataset.type}`;
+    } else {
+      seg.className = 'rpm-segment';
+    }
+  }
+}
+
+// --- 3. 아크 게이지 업데이트 (SPEED, BOOST) ---
+function updateArcGauge(prefix, val, min, max) {
+  const arc = $(prefix + 'Arc');
+  const needle = $(prefix + 'Needle');
+  if (!arc || !needle) return;
+
+  if (val === null || !Number.isFinite(val)) {
+    arc.setAttribute('stroke-dasharray', '0 100');
+    needle.setAttribute('transform', 'rotate(-90 100 106)');
+    return;
+  }
+  const ratio = Math.max(0, Math.min(1, (val - min) / (max - min)));
+  arc.setAttribute('stroke-dasharray', `${(ratio * 100).toFixed(1)} 100`);
+  // -90deg(좌) -> +90deg(우)
+  const angle = (-90 + ratio * 180).toFixed(1);
+  needle.setAttribute('transform', `rotate(${angle} 100 106)`);
+}
+
+// --- 4. Exception-based 보조 지표 상태 관리 ---
+function updateCoolant(temp) {
+  const card = $('cardCoolant');
+  const valEl = $('valCoolant');
+  const badge = $('badgeCoolant');
+  if (temp === null || temp === undefined) {
+    valEl.textContent = '--';
+    card.className = 'stat-card';
+    badge.textContent = 'N/A NOT SUPPORTED';
+    return;
+  }
+  valEl.textContent = Math.round(temp);
+  card.className = 'stat-card';
+
+  if (temp < 60) {
+    card.classList.add('state-cold');
+    badge.textContent = 'WARMUP';
+  } else if (temp >= 108) {
+    card.classList.add('state-danger');
+    badge.textContent = 'HOT!';
+  } else if (temp >= 100) {
+    card.classList.add('state-warn');
+    badge.textContent = 'HIGH';
+  } else {
+    badge.textContent = 'NORMAL';
+  }
+}
+
+function updateBattery(volts) {
+  const card = $('cardVoltage');
+  const valEl = $('valVoltage');
+  const badge = $('badgeVoltage');
+  if (volts === null || volts === undefined) {
+    valEl.textContent = '--.-';
+    card.className = 'stat-card';
+    badge.textContent = 'N/A NOT SUPPORTED';
+    return;
+  }
+  valEl.textContent = volts.toFixed(1);
+  card.className = 'stat-card';
+
+  if (volts < 12.0) {
+    card.classList.add('state-danger');
+    badge.textContent = 'LOW';
+  } else if (volts < 12.5) {
+    card.classList.add('state-warn');
+    badge.textContent = 'WARN';
+  } else if (volts > 15.0) {
+    card.classList.add('state-danger');
+    badge.textContent = 'HIGH';
+  } else {
+    badge.textContent = 'GOOD';
+  }
+}
+
+function updateEngineLoad(load) {
+  const card = $('cardLoad');
+  const valEl = $('valLoad');
+  const badge = $('badgeLoad');
+  if (load === null || load === undefined) {
+    valEl.textContent = '--';
+    card.className = 'stat-card';
+    badge.textContent = 'N/A NOT SUPPORTED';
+    return;
+  }
+  valEl.textContent = Math.round(load);
+  card.className = 'stat-card';
+
+  if (load >= 85) {
+    card.classList.add('state-warn');
+    badge.textContent = 'PEAK';
+  } else {
+    badge.textContent = 'NORMAL';
+  }
+}
+
+function updateOilTemp(temp) {
+  const card = $('cardOil');
+  const valEl = $('valOil');
+  const badge = $('badgeOil');
+  if (temp === null || temp === undefined) {
+    card.style.display = 'none'; // 미지원 시 자동 숨김
+    return;
+  }
+  card.style.display = 'flex';
+  valEl.textContent = Math.round(temp);
+  card.className = 'stat-card';
+  if (temp >= 125) {
+    card.classList.add('state-danger');
+    badge.textContent = 'HOT!';
+  } else {
+    badge.textContent = 'NORMAL';
+  }
+}
+
+// --- 5. BLE OBD-II 통신 및 상태 관리 ---
+const UUIDS = [
+  {name:"ELM BLE FFF0",service:"0000fff0-0000-1000-8000-00805f9b34fb",notify:"0000fff1-0000-1000-8000-00805f9b34fb",write:"0000fff2-0000-1000-8000-00805f9b34fb"},
+  {name:"ELM BLE FFE0",service:"0000ffe0-0000-1000-8000-00805f9b34fb",notify:"0000ffe1-0000-1000-8000-00805f9b34fb",write:"0000ffe1-0000-1000-8000-00805f9b34fb"},
+  {name:"NORDIC UART",service:"6e400001-b5a3-f393-e0a9-e50e24dcca9e",notify:"6e400003-b5a3-f393-e0a9-e50e24dcca9e",write:"6e400002-b5a3-f393-e0a9-e50e24dcca9e"},
+  {name:"CUSTOM 18F0",service:"000018f0-0000-1000-8000-00805f9b34fb",notify:"00002af0-0000-1000-8000-00805f9b34fb",write:"00002af1-0000-1000-8000-00805f9b34fb"}
+];
+const optionalServices = [...new Set([...UUIDS.map(x=>x.service),"0000180a-0000-1000-8000-00805f9b34fb"])];
+
+let device = null, server = null, rx = null, tx = null;
+let notifyBuffer = "", pending = null, connected = false, polling = false;
+let wakeLock = null, logLines = [];
+let supported = {};
+
+const log = s => {
+  logLines.unshift(new Date().toLocaleTimeString() + " " + s);
+  logLines = logLines.slice(0, 30);
+  $('diagnosticsBox').textContent = logLines.join("\n");
+};
+
+function setUIConnectedState(mode) { // 'connected', 'demo', 'disconnected'
+  const pill = $('statusPill');
+  const txt = $('statusText');
+  const disBtn = $('disconnectBtn');
+  const connBtn = $('connectBtn');
+
+  if (mode === 'connected') {
+    document.body.classList.add('is-connected');
+    pill.className = 'status-pill connected';
+    txt.textContent = 'CONNECTED';
+    disBtn.disabled = false;
+    connBtn.disabled = true;
+  } else if (mode === 'demo') {
+    document.body.classList.add('is-connected');
+    pill.className = 'status-pill demo';
+    txt.textContent = 'DEMO MODE';
+    disBtn.disabled = false;
+    connBtn.disabled = true;
+  } else {
+    document.body.classList.remove('is-connected');
+    pill.className = 'status-pill';
+    txt.textContent = 'DISCONNECTED';
+    disBtn.disabled = true;
+    connBtn.disabled = false;
+  }
+}
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+function onNotify(e) {
+  notifyBuffer += new TextDecoder().decode(e.target.value);
+  if (notifyBuffer.includes(">") && pending) {
+    const p = pending;
+    pending = null;
+    const out = notifyBuffer;
+    notifyBuffer = "";
+    p(out);
+  }
+}
+
+async function raw(cmd, timeout = 1400) {
+  if (!tx) throw Error("BLE write characteristic unavailable");
+  if (pending) throw Error("Previous OBD command still pending");
+  return new Promise(async (resolve, reject) => {
+    pending = resolve;
+    notifyBuffer = "";
+    const timer = setTimeout(() => {
+      if (pending) {
+        const p = pending;
+        pending = null;
+        p(notifyBuffer || "TIMEOUT");
+      }
+    }, timeout);
+    try {
+      const data = new TextEncoder().encode(cmd + "\r");
+      if (tx.properties.writeWithoutResponse && !tx.properties.write) {
+        await tx.writeValueWithoutResponse(data);
+      } else {
+        await tx.writeValue(data);
+      }
+      const original = pending;
+      pending = s => { clearTimeout(timer); original(s); };
+    } catch (e) {
+      clearTimeout(timer);
+      pending = null;
+      reject(e);
+    }
+  });
+}
+
+async function cmd(c) {
+  const r = await raw(c);
+  log(">" + c + "  " + r.replace(/[\r\n]/g, " ").trim());
+  return r;
+}
+
+async function findProfile(gatt) {
+  for (const p of UUIDS) {
+    try {
+      const svc = await gatt.getPrimaryService(p.service);
+      const n = await svc.getCharacteristic(p.notify);
+      let w;
+      try { w = await svc.getCharacteristic(p.write); } catch (e) { w = n; }
+      if (!(n.properties.notify || n.properties.indicate)) continue;
+      if (!(w.properties.write || w.properties.writeWithoutResponse)) continue;
+      rx = n; tx = w;
+      log("GATT profile: " + p.name);
+      return true;
+    } catch (e) {}
+  }
+  for (const sid of optionalServices) {
+    try {
+      const svc = await gatt.getPrimaryService(sid);
+      const chars = await svc.getCharacteristics();
+      const n = chars.find(c => c.properties.notify || c.properties.indicate);
+      const w = chars.find(c => c.properties.write || c.properties.writeWithoutResponse);
+      if (n && w) {
+        rx = n; tx = w;
+        log("GATT custom profile: " + sid);
+        return true;
+      }
+    } catch (e) {}
+  }
+  return false;
+}
+
+function bytesFor(resp, pid) {
+  const clean = resp.replace(/SEARCHING\.\.\./gi, "").replace(/[^0-9a-f]/gi, "").toUpperCase();
+  const key = ("41" + pid).toUpperCase();
+  const i = clean.indexOf(key);
+  if (i < 0) return null;
+  const pairs = clean.slice(i + key.length).match(/.{2}/g) || [];
+  return pairs.map(x => parseInt(x, 16)).filter(Number.isFinite);
+}
+
+async function pid(pidCode, n, fn) {
+  const r = await cmd("01" + pidCode);
+  const b = bytesFor(r, pidCode);
+  if (!b || b.length < n) {
+    supported[pidCode] = false;
+    return null;
+  }
+  supported[pidCode] = true;
+  return fn(...b);
+}
+
+async function readVoltage() {
+  const r = await cmd("ATRV");
+  const m = r.match(/(\d+(?:\.\d+)?)\s*V/i);
+  return m ? Number(m[1]) : null;
+}
+
+// 실시간 폴링 루프
+async function poll() {
+  if (polling) return;
+  polling = true;
+  let slowIndex = 0;
+  let mapVal = null, baroVal = null;
+
+  const slowTasks = [
+    async () => {
+      const v = await pid("05", 1, a => a - 40);
+      updateCoolant(v);
+    },
+    async () => {
+      const v = await pid("5C", 1, a => a - 40);
+      updateOilTemp(v);
+    },
+    async () => {
+      const v = await pid("0B", 1, a => a);
+      return v;
+    },
+    async () => {
+      const v = await pid("33", 1, a => a);
+      return v;
+    },
+    async () => {
+      const v = await pid("04", 1, a => Math.round(a * 100 / 255));
+      updateEngineLoad(v);
+    },
+    async () => {
+      const v = await readVoltage();
+      updateBattery(v);
+    }
+  ];
+
+  try {
+    while (connected) {
+      // 1순위: 속도 & RPM
+      const speed = await pid("0D", 1, a => a);
+      if (speed !== null) {
+        const sVal = Math.round(speed);
+        $('speedVal').textContent = sVal;
+        updateArcGauge('speed', sVal, 0, 240);
+      }
+
+      const rpm = await pid("0C", 2, (a, b) => Math.round((a * 256 + b) / 4));
+      if (rpm !== null) {
+        $('rpmVal').textContent = rpm.toLocaleString('en-US');
+        updateRpmBar(rpm);
+      }
+
+      // 2순위: 완만한 지표 순차 조회
+      try {
+        const t = slowTasks[slowIndex]();
+        slowIndex = (slowIndex + 1) % slowTasks.length;
+        const res = await t;
+        if (slowIndex === 3) mapVal = res;
+        if (slowIndex === 4) baroVal = res;
+        if (mapVal !== null && baroVal !== null) {
+          const boost = Math.max(0, (mapVal - baroVal) / 100);
+          $('boostVal').textContent = boost.toFixed(2);
+          updateArcGauge('boost', boost, 0, 2.0);
+        }
+      } catch (err) {
+        log("PID sub: " + err.message);
+      }
+
+      await delay(100);
+    }
+  } catch (e) {
+    log("Polling stopped: " + e.message);
+  }
+  polling = false;
+}
+
+async function startBLE() {
+  if (demoActive) stopDemo();
+  if (!navigator.bluetooth) {
+    alert("이 브라우저는 Web Bluetooth를 지원하지 않습니다. Chrome/Android 환경에서 이용하세요.");
+    return;
+  }
+  $('statusText').textContent = 'SEARCHING...';
+  try {
+    device = await navigator.bluetooth.requestDevice({acceptAllDevices: true, optionalServices});
+    log("Device: " + (device.name || "Unnamed"));
+    device.addEventListener("gattserverdisconnected", () => {
+      connected = false;
+      setUIConnectedState('disconnected');
+      log("GATT disconnected");
+    });
+
+    server = await device.gatt.connect();
+    if (!await findProfile(server)) throw Error("호환 BLE 프로파일을 찾지 못했습니다.");
+    await rx.startNotifications();
+    rx.addEventListener("characteristicvaluechanged", onNotify);
+    connected = true;
+
+    for (const c of ["ATZ","ATE0","ATL0","ATS0","ATH0","ATSP0"]) {
+      await cmd(c);
+      await delay(100);
+    }
+    setUIConnectedState('connected');
+    poll();
+  } catch (err) {
+    log("BLE Err: " + err.message);
+    setUIConnectedState('disconnected');
+    if (device?.gatt?.connected) device.gatt.disconnect();
+  }
+}
+
+function disconnectBLE() {
+  connected = false;
+  if (device?.gatt?.connected) device.gatt.disconnect();
+  setUIConnectedState('disconnected');
+}
+
+// --- 6. DEMO 모드 (시뮬레이터) ---
+let demoActive = false;
+let demoTimer = null;
+let demoPhase = 0;
+
+function startDemo() {
+  if (connected) disconnectBLE();
+  demoActive = true;
+  setUIConnectedState('demo');
+  $('modalDemoBtn').textContent = 'DEMO MODE: ON';
+  $('demoToggleBtn').textContent = 'STOP DEMO';
+
+  let currentSpeed = 0;
+  let currentRpm = 850;
+  let targetSpeed = 0;
+  let gear = 1;
+  let coolantSim = 54; // 예열 54°C부터 시작해 상태 변화 시연
+  let voltSim = 12.3;
+
+  demoTimer = setInterval(() => {
+    demoPhase += 0.05;
+
+    // 가속 / 감속 시뮬레이션
+    const cycle = Math.sin(demoPhase * 0.4);
+    if (cycle > 0) {
+      targetSpeed = 40 + cycle * 120; // 최고 160km/h
+    } else {
+      targetSpeed = 20 + Math.abs(cycle) * 30;
+    }
+    currentSpeed += (targetSpeed - currentSpeed) * 0.08;
+
+    // RPM & 변속 시뮬레이션
+    if (currentSpeed < 30) {
+      gear = 1;
+      currentRpm = 1000 + currentSpeed * 90;
+    } else if (currentSpeed < 65) {
+      gear = 2;
+      currentRpm = 1800 + (currentSpeed - 30) * 80;
+    } else if (currentSpeed < 105) {
+      gear = 3;
+      currentRpm = 2200 + (currentSpeed - 65) * 75;
+    } else {
+      gear = 4;
+      currentRpm = 2800 + (currentSpeed - 105) * 60;
+    }
+    // 급가속 시 RPM 튐
+    if (cycle > 0.8) currentRpm = Math.min(7600, currentRpm + 1800);
+
+    // 부스트 계산
+    const boostSim = Math.max(0, (currentRpm > 3000 ? (currentRpm - 2500) / 3800 : 0.1) * (cycle > 0 ? 1.2 : 0.2));
+
+    // 수온 시뮬레이션 (서서히 54°C -> 90°C 정상 -> 106°C 경고)
+    coolantSim += 0.08;
+    if (coolantSim > 110) coolantSim = 75;
+
+    // 전압 시뮬레이션
+    voltSim = 14.1 + Math.sin(demoPhase) * 0.3;
+
+    // 부하율
+    const loadSim = Math.min(96, Math.max(18, (currentRpm / 7500) * 100));
+
+    // UI 반영
+    const sDisplay = Math.round(currentSpeed);
+    const rDisplay = Math.round(currentRpm);
+    $('speedVal').textContent = sDisplay;
+    updateArcGauge('speed', sDisplay, 0, 240);
+
+    $('rpmVal').textContent = rDisplay.toLocaleString('en-US');
+    updateRpmBar(rDisplay);
+
+    $('boostVal').textContent = boostSim.toFixed(2);
+    updateArcGauge('boost', boostSim, 0, 2.0);
+
+    updateCoolant(coolantSim);
+    updateBattery(voltSim);
+    updateEngineLoad(loadSim);
+    updateOilTemp(coolantSim + 5);
+  }, 60);
+}
+
+function stopDemo() {
+  demoActive = false;
+  if (demoTimer) clearInterval(demoTimer);
+  demoTimer = null;
+  setUIConnectedState('disconnected');
+  $('modalDemoBtn').textContent = 'DEMO MODE: OFF';
+  $('demoToggleBtn').textContent = 'DEMO MODE';
+
+  // 수치 리셋
+  $('speedVal').textContent = '0';
+  updateArcGauge('speed', 0, 0, 240);
+  $('rpmVal').textContent = '0';
+  updateRpmBar(0);
+  $('boostVal').textContent = '0.00';
+  updateArcGauge('boost', 0, 0, 2.0);
+  updateCoolant(null);
+  updateBattery(null);
+  updateEngineLoad(null);
+  updateOilTemp(null);
+}
+
+// --- 7. 이벤트 바인딩 ---
+$('connectBtn').onclick = startBLE;
+$('disconnectBtn').onclick = () => {
+  if (demoActive) stopDemo();
+  else disconnectBLE();
+  $('settingsModal').classList.remove('open');
+};
+
+$('demoToggleBtn').onclick = () => {
+  if (demoActive) stopDemo();
+  else startDemo();
+};
+
+$('modalDemoBtn').onclick = () => {
+  if (demoActive) stopDemo();
+  else startDemo();
+};
+
+// 모달 제어
+$('openSettingsBtn').onclick = () => $('settingsModal').classList.add('open');
+$('closeSettingsBtn').onclick = () => $('settingsModal').classList.remove('open');
+$('settingsModal').onclick = e => {
+  if (e.target === $('settingsModal')) $('settingsModal').classList.remove('open');
+};
+
+// 풀스크린 & WakeLock
+$('fullscreenBtn').onclick = async () => {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch (e) {
+    log("Fullscreen Err: " + e.message);
+  }
+};
+
+$('wakeLockBtn').onclick = async () => {
+  try {
+    if (!('wakeLock' in navigator)) throw Error("WakeLock 미지원 브라우저");
+    wakeLock = await navigator.wakeLock.request('screen');
+    $('wakeLockBtn').textContent = 'SCREEN ON ✓';
+    wakeLock.addEventListener('release', () => $('wakeLockBtn').textContent = 'KEEP SCREEN ON');
+  } catch (e) {
+    log("WakeLock Err: " + e.message);
+  }
+};
+
+$('toggleLogBtn').onclick = () => {
+  const box = $('diagnosticsBox');
+  box.style.display = box.style.display === 'block' ? 'none' : 'block';
+};
+
+// PWA Service Worker
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(e => log("SW Err: " + e.message));
+  });
+}
 })();
 </script>
-</body></html>
+</body>
+</html>
