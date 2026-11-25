@@ -247,11 +247,11 @@ header{
   background:var(--card-bg);
   border:1px solid var(--panel-border);
   border-radius:var(--radius-lg);
-  padding:clamp(8px,1.4vh,14px) clamp(10px,1.8vw,14px);
+  padding:clamp(8px,1.2vh,12px) clamp(8px,1.5vw,12px);
   display:flex;
   flex-direction:column;
   align-items:center;
-  justify-content:space-between;
+  justify-content:flex-start;
   position:relative;
   overflow:hidden;
 }
@@ -260,29 +260,31 @@ header{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  flex:0 0 auto;
 }
 .gauge-svg-wrap{
   position:relative;
   width:100%;
-  max-width:280px;
+  max-width:100%;
   flex:1 1 auto;
   min-height:0;
   display:flex;
   align-items:center;
   justify-content:center;
+  margin-top:clamp(2px, 0.8vh, 6px);
 }
 .gauge-svg{
   width:100%;
   height:100%;
-  max-height:clamp(120px,26vh,190px);
+  max-height:clamp(140px,32vh,240px);
   display:block;
   overflow:visible;
 }
 
-/* 게이지 내부 중앙 텍스트 */
+/* 게이지 내부 중앙 텍스트: 아크 안쪽에 밀착 */
 .gauge-center-info{
   position:absolute;
-  bottom:clamp(4px,1.2vh,12px);
+  bottom:clamp(0px,0.8vh,8px);
   left:0;
   right:0;
   display:flex;
@@ -291,18 +293,18 @@ header{
   pointer-events:none;
 }
 .gauge-num{
-  font-size:clamp(38px,8vh,66px);
+  font-size:clamp(44px,9.2vh,78px);
   font-weight:950;
-  line-height:.95;
+  line-height:.88;
   color:var(--text-primary);
   letter-spacing:-2px;
 }
 .gauge-unit{
-  font-size:clamp(11px,1.7vh,13px);
+  font-size:clamp(10px,1.5vh,13px);
   font-weight:800;
   color:var(--text-secondary);
   letter-spacing:.5px;
-  margin-top:2px;
+  margin-top:3px;
 }
 
 /* 4. 하단 보조 지표 (숫자 중심 컴팩트 카드) */
@@ -616,13 +618,13 @@ body.is-connected .bottom-controls{
         <span class="kicker">VEHICLE SPEED</span>
       </div>
       <div class="gauge-svg-wrap">
-        <svg class="gauge-svg" viewBox="0 0 200 125" aria-label="Speed Gauge">
+        <svg class="gauge-svg" viewBox="15 25 170 88" aria-label="Speed Gauge">
           <!-- 정확한 180도 반원 눈금 Ticks (카드 밖 삐져나옴 원천 차단) -->
           <g id="speedTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
           <!-- 베이스 백그라운드 아크 (반원, 캡 라운드, 양끝 큰점 제거) -->
           <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
-          <!-- 활성 아크 (빨강/화이트) -->
-          <path id="speedArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+          <!-- 활성 아크 (빨강/화이트) - 0 상태에서는 opacity 0으로 점 제거 -->
+          <path id="speedArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease;"/>
           <!-- 은은한 바늘 -->
           <g id="speedNeedle" transform="rotate(-90 100 106)">
             <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
@@ -642,13 +644,13 @@ body.is-connected .bottom-controls{
         <span class="kicker">MANIFOLD BOOST</span>
       </div>
       <div class="gauge-svg-wrap">
-        <svg class="gauge-svg" viewBox="0 0 200 125" aria-label="Boost Gauge">
+        <svg class="gauge-svg" viewBox="15 25 170 88" aria-label="Boost Gauge">
           <!-- 정확한 180도 반원 눈금 Ticks -->
           <g id="boostTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
           <!-- 베이스 아크 -->
           <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
-          <!-- 활성 아크 -->
-          <path id="boostArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+          <!-- 활성 아크 - 0 상태에서는 opacity 0으로 점 제거 -->
+          <path id="boostArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease;"/>
           <!-- 은은한 바늘 -->
           <g id="boostNeedle" transform="rotate(-90 100 106)">
             <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
@@ -799,13 +801,19 @@ function updateArcGauge(prefix, val, min, max) {
   const needle = $(prefix + 'Needle');
   if (!arc || !needle) return;
 
-  if (val === null || !Number.isFinite(val)) {
+  if (val === null || !Number.isFinite(val) || val <= min) {
+    arc.style.opacity = '0';
     arc.setAttribute('stroke-dasharray', '0 100');
     needle.setAttribute('transform', 'rotate(-90 100 106)');
     return;
   }
   const ratio = Math.max(0, Math.min(1, (val - min) / (max - min)));
-  arc.setAttribute('stroke-dasharray', `${(ratio * 100).toFixed(1)} 100`);
+  if (ratio <= 0.005) {
+    arc.style.opacity = '0';
+  } else {
+    arc.style.opacity = '1';
+    arc.setAttribute('stroke-dasharray', `${(ratio * 100).toFixed(1)} 100`);
+  }
   // -90deg(좌) -> +90deg(우)
   const angle = (-90 + ratio * 180).toFixed(1);
   needle.setAttribute('transform', `rotate(${angle} 100 106)`);
@@ -1325,10 +1333,22 @@ $('toggleLogBtn').onclick = () => {
   box.style.display = box.style.display === 'block' ? 'none' : 'block';
 };
 
-// PWA Service Worker
+// PWA Service Worker (자동 업데이트 & 즉시 반영)
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(e => log("SW Err: " + e.message));
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // 주기적 및 진입 시 업데이트 확인
+      reg.update();
+    }).catch(e => log("SW Err: " + e.message));
+
+    // 새 서비스 워커가 제어권을 가져오면 즉시 화면 갱신
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   });
 }
 })();
