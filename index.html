@@ -319,8 +319,11 @@ header{
 .sub-stats-row{
   flex:0 0 auto;
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(85px, 1fr));
+  grid-template-columns:repeat(auto-fit, minmax(0, 1fr));
   gap:clamp(6px,1.4vw,10px);
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
 }
 .stat-card{
   background:var(--card-bg);
@@ -333,34 +336,44 @@ header{
   position:relative;
   transition:border-color .3s ease, box-shadow .3s ease;
   min-height:clamp(54px,8.5vh,74px);
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
+  overflow:hidden;
 }
 .stat-card-top{
   display:flex;
   justify-content:space-between;
   align-items:center;
   flex-wrap:nowrap;
+  width:100%;
   min-width:0;
   overflow:hidden;
-  gap:4px;
+  gap:6px;
 }
 .stat-card-top .kicker{
-  font-size:clamp(8.5px, 1.2vh, 10px);
+  font-size:clamp(9px, 1.3vh, 10.5px);
   min-width:0;
+  flex:1 1 auto;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  letter-spacing:.5px;
 }
 .stat-badge{
-  font-size:clamp(7.5px, 1.1vh, 8.5px);
+  font-size:clamp(8px, 1.1vh, 9px);
   font-weight:800;
-  padding:1px 5px;
+  padding:2px 6px;
   border-radius:4px;
   background:#1a2321;
   color:var(--text-dim);
   text-transform:uppercase;
   letter-spacing:.3px;
   white-space:nowrap;
-  flex-shrink:0;
+  flex:0 0 auto;
+  max-width:48%;
+  overflow:hidden;
+  text-overflow:ellipsis;
   transition:all .3s ease;
 }
 .stat-value-group{
@@ -427,9 +440,39 @@ header{
 .bottom-controls{
   flex:0 0 auto;
   display:flex;
-  gap:8px;
-  align-items:center;
-  justify-content:center;
+  flex-direction:column;
+  gap:clamp(4px, 0.8vh, 6px);
+  width:100%;
+}
+.bottom-controls .main-connect-btn{
+  width:100%;
+  padding:clamp(9px, 1.4vh, 12px);
+  font-size:clamp(12px, 1.8vh, 14px);
+  font-weight:800;
+}
+.bottom-sub-btns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(4px, 0.8vh, 6px);
+  width:100%;
+}
+.bottom-sub-btns .btn{
+  width:100%;
+  padding:clamp(6px, 1vh, 9px);
+  font-size:clamp(10px, 1.4vh, 11.5px);
+  background:#16201d;
+  border:1px solid #23312c;
+  color:var(--text-secondary);
+  font-weight:700;
+}
+.bottom-sub-btns .btn:hover{
+  background:#202c28;
+  color:var(--text-primary);
+}
+.bottom-sub-btns .btn.is-active, .modal-grid .btn.is-active{
+  background:rgba(16,185,129,0.15);
+  border-color:rgba(16,185,129,0.4);
+  color:var(--green);
 }
 .btn{
   border:0;
@@ -454,12 +497,6 @@ header{
   box-shadow:0 2px 10px var(--red-glow);
 }
 .btn.primary:hover{background:#ff4752}
-.btn.demo-btn{
-  background:#262312;
-  color:var(--amber);
-  border:1px solid rgba(245,158,11,0.3);
-}
-.btn.demo-btn:hover{background:#363016}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* 연결 완료 시 컨트롤 바 숨김 */
@@ -611,14 +648,18 @@ body.is-connected .bottom-controls{
     margin-top:2px;
   }
 
-  /* 2. 하단 보조 지표 2열 그리드 (2x2) */
+  /* 2. 하단 보조 지표 2열 그리드 (2x2) - 너비 벗어남 방지 */
   .sub-stats-row{
-    grid-template-columns:repeat(2, 1fr);
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
     gap:clamp(5px, 0.9vh, 7px);
+    width:100%;
+    box-sizing:border-box;
   }
   .stat-card{
-    padding:clamp(5px, 0.8vh, 8px) clamp(8px, 1.5vw, 10px);
+    padding:clamp(5px, 0.8vh, 8px) clamp(6px, 1.2vw, 10px);
     min-height:clamp(50px, 7.8vh, 66px);
+    min-width:0;
+    box-sizing:border-box;
   }
   .stat-card.span-full{
     grid-column:span 2;
@@ -760,7 +801,7 @@ body.is-connected .bottom-controls{
     <div class="stat-card" id="cardCoolant">
       <div class="stat-card-top">
         <span class="kicker">COOLANT</span>
-        <span class="stat-badge" id="badgeCoolant">OK</span>
+        <span class="stat-badge" id="badgeCoolant">N/A</span>
       </div>
       <div class="stat-value-group">
         <span class="stat-value" id="valCoolant">--</span>
@@ -772,7 +813,7 @@ body.is-connected .bottom-controls{
     <div class="stat-card" id="cardVoltage">
       <div class="stat-card-top">
         <span class="kicker">BATTERY</span>
-        <span class="stat-badge" id="badgeVoltage">OK</span>
+        <span class="stat-badge" id="badgeVoltage">N/A</span>
       </div>
       <div class="stat-value-group">
         <span class="stat-value" id="valVoltage">--.-</span>
@@ -784,7 +825,7 @@ body.is-connected .bottom-controls{
     <div class="stat-card span-full" id="cardLoad">
       <div class="stat-card-top">
         <span class="kicker">LOAD</span>
-        <span class="stat-badge" id="badgeLoad">OK</span>
+        <span class="stat-badge" id="badgeLoad">N/A</span>
       </div>
       <div class="stat-value-group">
         <span class="stat-value" id="valLoad">--</span>
@@ -796,7 +837,7 @@ body.is-connected .bottom-controls{
     <div class="stat-card" id="cardOil" style="display:none">
       <div class="stat-card-top">
         <span class="kicker">OIL TEMP</span>
-        <span class="stat-badge" id="badgeOil">OK</span>
+        <span class="stat-badge" id="badgeOil">N/A</span>
       </div>
       <div class="stat-value-group">
         <span class="stat-value" id="valOil">--</span>
@@ -807,8 +848,11 @@ body.is-connected .bottom-controls{
 
   <!-- 5. 미연결 시 표시되는 하단 기본 컨트롤 바 (연결되면 자동 숨김) -->
   <div class="bottom-controls" id="bottomControls">
-    <button class="btn primary" id="connectBtn">CONNECT OBD-II</button>
-    <button class="btn demo-btn" id="demoToggleBtn">DEMO MODE</button>
+    <button class="btn primary main-connect-btn" id="connectBtn">CONNECT OBD-II</button>
+    <div class="bottom-sub-btns">
+      <button class="btn" id="quickFullscreenBtn">FULL SCREEN</button>
+      <button class="btn" id="quickWakeBtn">KEEP SCREEN ON</button>
+    </div>
   </div>
 </main>
 
@@ -822,9 +866,10 @@ body.is-connected .bottom-controls{
       </button>
     </div>
     <div class="modal-grid">
-      <button class="btn" id="modalDemoBtn">DEMO MODE: OFF</button>
+      <button class="btn is-active" id="autoRoutineBtn" style="grid-column:1/-1;">AUTO FULLSCREEN & WAKE: ON</button>
       <button class="btn" id="fullscreenBtn">FULL SCREEN</button>
       <button class="btn" id="wakeLockBtn">KEEP SCREEN ON</button>
+      <button class="btn" id="modalDemoBtn">DEMO MODE: OFF</button>
       <button class="btn" id="toggleLogBtn">CONNECTION LOG</button>
       <button class="btn" id="disconnectBtn" style="grid-column:1/-1;background:#351316;color:var(--red);" disabled>DISCONNECT OBD-II</button>
     </div>
@@ -916,7 +961,7 @@ function updateCoolant(temp) {
   if (temp === null || temp === undefined) {
     valEl.textContent = '--';
     card.className = 'stat-card';
-    badge.textContent = 'N/A NOT SUPPORTED';
+    badge.textContent = 'N/A';
     return;
   }
   valEl.textContent = Math.round(temp);
@@ -943,7 +988,7 @@ function updateBattery(volts) {
   if (volts === null || volts === undefined) {
     valEl.textContent = '--.-';
     card.className = 'stat-card';
-    badge.textContent = 'N/A NOT SUPPORTED';
+    badge.textContent = 'N/A';
     return;
   }
   valEl.textContent = volts.toFixed(1);
@@ -972,7 +1017,7 @@ function updateEngineLoad(load) {
   if (load === null || load === undefined) {
     valEl.textContent = '--';
     card.className = 'stat-card' + (oilSupported ? '' : ' span-full');
-    badge.textContent = 'N/A NOT SUPPORTED';
+    badge.textContent = 'N/A';
     return;
   }
   valEl.textContent = Math.round(load);
@@ -994,6 +1039,7 @@ function updateOilTemp(temp) {
   if (temp === null || temp === undefined) {
     oilSupported = false;
     card.style.display = 'none'; // 미지원 시 자동 숨김
+    badge.textContent = 'N/A';
     if (loadCard) loadCard.classList.add('span-full');
     return;
   }
@@ -1242,6 +1288,11 @@ async function startBLE() {
     alert("이 브라우저는 Web Bluetooth를 지원하지 않습니다. Chrome/Android 환경에서 이용하세요.");
     return;
   }
+  // 1) 자동 루틴: 사용자 제스처 컨텍스트에서 화면 유지(WakeLock) 즉시 요청
+  if (autoRoutine) {
+    await enableWakeLock();
+  }
+
   $('statusText').textContent = 'SEARCHING...';
   try {
     device = await navigator.bluetooth.requestDevice({acceptAllDevices: true, optionalServices});
@@ -1250,6 +1301,8 @@ async function startBLE() {
       connected = false;
       setUIConnectedState('disconnected');
       log("GATT disconnected");
+      disableWakeLock();
+      exitFullscreenSafe();
     });
 
     server = await device.gatt.connect();
@@ -1263,11 +1316,19 @@ async function startBLE() {
       await delay(100);
     }
     setUIConnectedState('connected');
+
+    // 2) BLE 연결 성공 직후: 자동 풀스크린 진입 (안전한 예외 처리)
+    if (autoRoutine) {
+      await requestFullscreenSafe();
+    }
+
     poll();
   } catch (err) {
     log("BLE Err: " + err.message);
     setUIConnectedState('disconnected');
     if (device?.gatt?.connected) device.gatt.disconnect();
+    disableWakeLock();
+    exitFullscreenSafe();
   }
 }
 
@@ -1275,6 +1336,9 @@ function disconnectBLE() {
   connected = false;
   if (device?.gatt?.connected) device.gatt.disconnect();
   setUIConnectedState('disconnected');
+  // Wake Lock & 풀스크린 깔끔 해제
+  disableWakeLock();
+  exitFullscreenSafe();
 }
 
 // --- 6. DEMO 모드 (시뮬레이터) ---
@@ -1287,7 +1351,7 @@ function startDemo() {
   demoActive = true;
   setUIConnectedState('demo');
   $('modalDemoBtn').textContent = 'DEMO MODE: ON';
-  $('demoToggleBtn').textContent = 'STOP DEMO';
+  $('modalDemoBtn').classList.add('is-active');
 
   let currentSpeed = 0;
   let currentRpm = 850;
@@ -1363,7 +1427,7 @@ function stopDemo() {
   demoTimer = null;
   setUIConnectedState('disconnected');
   $('modalDemoBtn').textContent = 'DEMO MODE: OFF';
-  $('demoToggleBtn').textContent = 'DEMO MODE';
+  $('modalDemoBtn').classList.remove('is-active');
 
   // 수치 리셋
   $('speedVal').textContent = '0';
@@ -1378,7 +1442,109 @@ function stopDemo() {
   updateOilTemp(null);
 }
 
-// --- 7. 이벤트 바인딩 ---
+// --- 7. 화면 유지(WakeLock) & 풀스크린 & 제어 루틴 ---
+let autoRoutine = localStorage.getItem('obd_auto_routine') !== 'false'; // 기본값 true
+
+function updateAutoRoutineButton() {
+  const btn = $('autoRoutineBtn');
+  if (!btn) return;
+  btn.textContent = `AUTO FULLSCREEN & WAKE: ${autoRoutine ? 'ON' : 'OFF'}`;
+  btn.classList.toggle('is-active', autoRoutine);
+}
+updateAutoRoutineButton();
+
+function updateFullscreenButtons(isActive) {
+  const text = isActive ? 'EXIT FULLSCREEN' : 'FULL SCREEN';
+  if ($('fullscreenBtn')) {
+    $('fullscreenBtn').textContent = text;
+    $('fullscreenBtn').classList.toggle('is-active', isActive);
+  }
+  if ($('quickFullscreenBtn')) {
+    $('quickFullscreenBtn').textContent = text;
+    $('quickFullscreenBtn').classList.toggle('is-active', isActive);
+  }
+}
+
+function updateWakeButtons(isActive) {
+  const text = isActive ? 'SCREEN ON ✓' : 'KEEP SCREEN ON';
+  if ($('wakeLockBtn')) {
+    $('wakeLockBtn').textContent = text;
+    $('wakeLockBtn').classList.toggle('is-active', isActive);
+  }
+  if ($('quickWakeBtn')) {
+    $('quickWakeBtn').textContent = text;
+    $('quickWakeBtn').classList.toggle('is-active', isActive);
+  }
+}
+
+async function enableWakeLock() {
+  if (wakeLock) return true;
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      updateWakeButtons(true);
+      wakeLock.addEventListener('release', () => {
+        wakeLock = null;
+        updateWakeButtons(false);
+      });
+      return true;
+    }
+  } catch (e) {
+    log("WakeLock Err: " + e.message);
+  }
+  return false;
+}
+
+async function disableWakeLock() {
+  if (wakeLock) {
+    try { await wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+    updateWakeButtons(false);
+  }
+}
+
+async function requestFullscreenSafe() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    }
+    updateFullscreenButtons(true);
+  } catch (e) {
+    log("Auto Fullscreen: " + e.message);
+  }
+}
+
+async function exitFullscreenSafe() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+  } catch (e) {}
+  updateFullscreenButtons(false);
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch (e) {
+    log("Fullscreen Err: " + e.message);
+  }
+}
+
+async function toggleWakeLock() {
+  if (wakeLock) {
+    await disableWakeLock();
+  } else {
+    await enableWakeLock();
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  updateFullscreenButtons(!!document.fullscreenElement);
+});
+
+// --- 8. 이벤트 바인딩 ---
 $('connectBtn').onclick = startBLE;
 $('disconnectBtn').onclick = () => {
   if (demoActive) stopDemo();
@@ -1386,9 +1552,10 @@ $('disconnectBtn').onclick = () => {
   $('settingsModal').classList.remove('open');
 };
 
-$('demoToggleBtn').onclick = () => {
-  if (demoActive) stopDemo();
-  else startDemo();
+$('autoRoutineBtn').onclick = () => {
+  autoRoutine = !autoRoutine;
+  localStorage.setItem('obd_auto_routine', autoRoutine);
+  updateAutoRoutineButton();
 };
 
 $('modalDemoBtn').onclick = () => {
@@ -1396,32 +1563,19 @@ $('modalDemoBtn').onclick = () => {
   else startDemo();
 };
 
+// 퀵 버튼 (메인 화면 하단)
+$('quickFullscreenBtn').onclick = toggleFullscreen;
+$('quickWakeBtn').onclick = toggleWakeLock;
+
+// 설정 모달 버튼
+$('fullscreenBtn').onclick = toggleFullscreen;
+$('wakeLockBtn').onclick = toggleWakeLock;
+
 // 모달 제어
 $('openSettingsBtn').onclick = () => $('settingsModal').classList.add('open');
 $('closeSettingsBtn').onclick = () => $('settingsModal').classList.remove('open');
 $('settingsModal').onclick = e => {
   if (e.target === $('settingsModal')) $('settingsModal').classList.remove('open');
-};
-
-// 풀스크린 & WakeLock
-$('fullscreenBtn').onclick = async () => {
-  try {
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  } catch (e) {
-    log("Fullscreen Err: " + e.message);
-  }
-};
-
-$('wakeLockBtn').onclick = async () => {
-  try {
-    if (!('wakeLock' in navigator)) throw Error("WakeLock 미지원 브라우저");
-    wakeLock = await navigator.wakeLock.request('screen');
-    $('wakeLockBtn').textContent = 'SCREEN ON ✓';
-    wakeLock.addEventListener('release', () => $('wakeLockBtn').textContent = 'KEEP SCREEN ON');
-  } catch (e) {
-    log("WakeLock Err: " + e.message);
-  }
 };
 
 $('toggleLogBtn').onclick = () => {
