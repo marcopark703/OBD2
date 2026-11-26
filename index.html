@@ -11,23 +11,22 @@
 :root{
   color-scheme:dark;
   --bg:#090d0c;
-  --panel:#111716;
-  --panel-border:#1c2523;
-  --card-bg:#141c1a;
-  --red:#ff2b37;
-  --red-glow:rgba(255,43,55,0.35);
+  --panel:#111615;
+  --panel-border:#1c2522;
+  --card-bg:#121817;
+  --mint:#00e699;
+  --mint-glow:rgba(0,230,153,0.35);
+  --red:#ff3b47;
+  --red-glow:rgba(255,59,71,0.35);
   --amber:#f59e0b;
   --amber-glow:rgba(245,158,11,0.3);
   --cyan:#38bdf8;
-  --cyan-glow:rgba(56,189,248,0.3);
-  --green:#10b981;
-  --green-glow:rgba(16,185,129,0.3);
   --text-primary:#f5f7f6;
-  --text-secondary:#66736f;
-  --text-dim:#46504c;
-  --track-bg:#1f2926;
+  --text-secondary:#7d8c87;
+  --text-dim:#4a5753;
+  --track-bg:#1b2421;
   --radius-lg:18px;
-  --radius-md:12px;
+  --radius-md:14px;
   --radius-sm:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -47,22 +46,22 @@ body{
   align-items:center;
 }
 
-/* 숫자 고정폭 tabular-nums 필수 적용 */
-.tabular, .num-val, .gauge-num, .rpm-digital, .stat-value{
+/* 숫자 고정폭 tabular-nums */
+.tabular, .num-val, .rpm-num, .speed-num, .boost-val, .stat-value{
   font-variant-numeric:tabular-nums;
   letter-spacing:-0.5px;
 }
 
-/* 메인 컨테이너: 100dvh 스크롤 없이 한 화면에 딱 맞도록 Flex 컬럼 */
+/* 메인 대시보드 컨테이너: 100dvh 스크롤 없이 한 화면에 최적화 */
 .app{
   width:100%;
   max-width:960px;
   height:100dvh;
   max-height:100dvh;
-  padding:clamp(8px,1.8vh,16px) clamp(10px,2.2vw,18px);
+  padding:clamp(8px,1.5vh,16px) clamp(10px,2vw,18px);
   display:flex;
   flex-direction:column;
-  gap:clamp(8px,1.4vh,13px);
+  gap:clamp(8px,1.2vh,14px);
   overflow:hidden;
 }
 
@@ -80,7 +79,7 @@ header{
   gap:8px;
 }
 .brand-title{
-  font-size:clamp(11px,1.8vh,13px);
+  font-size:clamp(12px,1.8vh,14px);
   font-weight:900;
   letter-spacing:1px;
   color:var(--text-secondary);
@@ -89,11 +88,11 @@ header{
   display:inline-flex;
   align-items:center;
   gap:6px;
-  font-size:clamp(10px,1.5vh,11px);
-  font-weight:700;
-  padding:3px 9px;
+  font-size:clamp(10px,1.4vh,11px);
+  font-weight:750;
+  padding:3px 10px;
   border-radius:99px;
-  background:#141c1a;
+  background:#131b19;
   border:1px solid #1c2724;
   color:var(--text-secondary);
   transition:all .3s ease;
@@ -106,13 +105,13 @@ header{
   transition:all .3s ease;
 }
 .status-pill.connected{
-  background:rgba(16,185,129,0.12);
-  border-color:rgba(16,185,129,0.3);
-  color:var(--green);
+  background:rgba(0,230,153,0.12);
+  border-color:rgba(0,230,153,0.3);
+  color:var(--mint);
 }
 .status-pill.connected .status-dot{
-  background:var(--green);
-  box-shadow:0 0 8px var(--green);
+  background:var(--mint);
+  box-shadow:0 0 8px var(--mint);
   animation:pulse-dot 2s infinite;
 }
 .status-pill.demo{
@@ -154,145 +153,38 @@ header{
 }
 .icon-btn svg{width:18px;height:18px;fill:currentColor}
 
-/* 2. 상단 풀-폭 가로형 RPM 세그먼트 바 */
-.rpm-section{
-  flex:0 0 auto;
-  background:var(--card-bg);
-  border:1px solid var(--panel-border);
-  border-radius:var(--radius-md);
-  padding:clamp(8px,1.5vh,12px) clamp(12px,2vw,16px);
-  display:flex;
-  flex-direction:column;
-  gap:clamp(6px,1vh,9px);
-}
-.rpm-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:baseline;
-}
-.kicker{
-  font-size:clamp(10px,1.4vh,11px);
-  font-weight:700;
-  letter-spacing:1px;
-  color:var(--text-secondary);
-  text-transform:uppercase;
-}
-.rpm-val-group{
-  display:flex;
-  align-items:baseline;
-  gap:4px;
-}
-.rpm-digital{
-  font-size:clamp(22px,3.8vh,32px);
-  font-weight:900;
-  color:var(--text-primary);
-  line-height:1;
-}
-.rpm-unit{
-  font-size:clamp(10px,1.4vh,12px);
-  font-weight:700;
-  color:var(--text-secondary);
-}
-
-/* 세그먼트 RPM 바 (가로형) */
-.rpm-bar-container{
-  width:100%;
-  height:clamp(14px,2.2vh,20px);
-  display:flex;
-  gap:3px;
-  align-items:stretch;
-  background:#090d0c;
-  padding:3px;
-  border-radius:6px;
-  border:1px solid #1b2422;
-}
-.rpm-segment{
-  flex:1;
-  background:var(--track-bg);
-  border-radius:2px;
-  transition:background .06s ease, box-shadow .06s ease;
-}
-.rpm-segment.active.norm{
-  background:#f5f7f6;
-  box-shadow:0 0 6px rgba(245,247,246,0.5);
-}
-.rpm-segment.active.warn{
-  background:var(--amber);
-  box-shadow:0 0 6px var(--amber-glow);
-}
-.rpm-segment.active.redzone{
-  background:var(--red);
-  box-shadow:0 0 8px var(--red-glow);
-}
-.rpm-ticks-label{
-  display:flex;
-  justify-content:space-between;
-  font-size:8px;
-  font-weight:700;
-  color:var(--text-dim);
-  padding:0 2px;
-  margin-top:-2px;
-}
-.rpm-ticks-label span.red{color:rgba(255,43,55,0.7)}
-
-/* 3. 중단 주력 듀얼 게이지 (SPEED + BOOST) */
-.main-gauges-row{
+/* 2. 중앙 메인 클러스터 (RPM 아크 + 속도) */
+.main-cluster{
   flex:1 1 auto;
   min-height:0;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:clamp(8px,1.6vw,12px);
-}
-.gauge-card{
-  background:var(--card-bg);
-  border:1px solid var(--panel-border);
-  border-radius:var(--radius-lg);
-  padding:clamp(8px,1.2vh,12px) clamp(8px,1.5vw,12px);
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:clamp(6px, 1vh, 10px);
   position:relative;
-  overflow:hidden;
 }
-.gauge-card-header{
-  width:100%;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex:0 0 auto;
-}
-.gauge-body{
+
+/* RPM 아크 영역 */
+.rpm-arc-box{
   position:relative;
   width:100%;
-  flex:1 1 auto;
-  min-height:0;
+  max-width:320px;
+  height:auto;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
 }
-.gauge-svg-wrap{
-  position:relative;
+.rpm-svg{
   width:100%;
-  max-width:100%;
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.gauge-svg{
-  width:100%;
-  height:100%;
-  max-height:clamp(130px,28vh,220px);
+  height:auto;
+  max-height:clamp(120px, 24vh, 175px);
   display:block;
   overflow:visible;
 }
-
-/* 게이지 내부 중앙 텍스트 (넓은 화면 기본) */
-.gauge-info-wrap{
+.rpm-center-data{
   position:absolute;
-  bottom:clamp(0px,0.8vh,8px);
+  bottom:clamp(4px, 1.2vh, 14px);
   left:0;
   right:0;
   display:flex;
@@ -300,215 +192,298 @@ header{
   align-items:center;
   pointer-events:none;
 }
-.gauge-num{
-  font-size:clamp(44px,9.2vh,78px);
-  font-weight:950;
-  line-height:.88;
+.rpm-num{
+  font-size:clamp(36px, 6.5vh, 48px);
+  font-weight:900;
+  line-height:.95;
   color:var(--text-primary);
-  letter-spacing:-2px;
 }
-.gauge-unit{
-  font-size:clamp(10px,1.5vh,13px);
-  font-weight:800;
+.rpm-unit{
+  font-size:clamp(10px, 1.4vh, 12px);
+  font-weight:700;
   color:var(--text-secondary);
   letter-spacing:.5px;
-  margin-top:3px;
+  margin-top:2px;
 }
 
-/* 4. 하단 보조 지표 (숫자 중심 컴팩트 카드) */
-.sub-stats-row{
+/* RPM 아크 바로 아래 초대형 속도계 */
+.speed-cluster{
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:6px;
+  margin-top:clamp(2px, 0.6vh, 6px);
+}
+.speed-num{
+  font-size:clamp(54px, 11vh, 88px);
+  font-weight:950;
+  line-height:.9;
+  letter-spacing:-3px;
+  color:var(--text-primary);
+}
+.speed-unit{
+  font-size:clamp(14px, 2.2vh, 18px);
+  font-weight:750;
+  color:var(--text-secondary);
+}
+
+/* 가로 모드 전용 통합 중앙 정보 (세로 모드에서는 숨김) */
+.landscape-center-info{
+  display:none;
+  position:absolute;
+  bottom:clamp(6px, 1.5vh, 16px);
+  left:0;
+  right:0;
+  flex-direction:column;
+  align-items:center;
+  pointer-events:none;
+}
+.landscape-speed-row{
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+}
+.landscape-speed-num{
+  font-size:clamp(40px, 8.5vh, 56px);
+  font-weight:950;
+  line-height:.95;
+  letter-spacing:-2px;
+}
+.landscape-speed-unit{
+  font-size:clamp(12px, 1.8vh, 14px);
+  font-weight:750;
+  color:var(--text-secondary);
+}
+.landscape-rpm-num{
+  font-size:clamp(24px, 4.8vh, 32px);
+  font-weight:900;
+  line-height:1;
+  color:var(--text-secondary);
+  margin-top:2px;
+}
+
+/* 3. BOOST 가로 막대형 카드 */
+.boost-bar-card{
+  flex:0 0 auto;
+  background:var(--card-bg);
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius-md);
+  padding:clamp(8px, 1.3vh, 12px) clamp(12px, 2.2vw, 16px);
+  display:flex;
+  flex-direction:column;
+  gap:clamp(5px, 0.8vh, 8px);
+  width:100%;
+}
+.boost-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+}
+.kicker{
+  font-size:clamp(10px, 1.4vh, 11px);
+  font-weight:750;
+  letter-spacing:1px;
+  color:var(--text-secondary);
+  text-transform:uppercase;
+}
+.boost-val-wrap{
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+}
+.boost-val{
+  font-size:clamp(18px, 3vh, 23px);
+  font-weight:900;
+  color:var(--text-primary);
+  line-height:1;
+}
+.boost-unit{
+  font-size:clamp(10px, 1.4vh, 12px);
+  font-weight:700;
+  color:var(--text-secondary);
+}
+.boost-track{
+  width:100%;
+  height:clamp(8px, 1.3vh, 11px);
+  background:var(--track-bg);
+  border-radius:99px;
+  overflow:hidden;
+  position:relative;
+}
+.boost-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg, var(--mint), #10b981);
+  border-radius:99px;
+  transition:width .12s ease-out;
+  box-shadow:0 0 8px var(--mint-glow);
+}
+
+/* 4. 하단 보조 지표 (2×2 그리드) */
+.sub-stats-grid{
   flex:0 0 auto;
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(0, 1fr));
-  gap:clamp(6px,1.4vw,10px);
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:clamp(6px, 1vh, 9px);
   width:100%;
-  min-width:0;
-  box-sizing:border-box;
 }
 .stat-card{
   background:var(--card-bg);
   border:1px solid var(--panel-border);
   border-radius:var(--radius-md);
-  padding:clamp(6px,1.1vh,10px) clamp(8px,1.3vw,12px);
+  padding:clamp(7px, 1.2vh, 11px) clamp(10px, 1.8vw, 14px);
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  position:relative;
+  min-height:clamp(54px, 8.5vh, 72px);
   transition:border-color .3s ease, box-shadow .3s ease;
-  min-height:clamp(54px,8.5vh,74px);
-  min-width:0;
-  width:100%;
-  box-sizing:border-box;
-  overflow:hidden;
-}
-.stat-card-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:nowrap;
-  width:100%;
   min-width:0;
   overflow:hidden;
-  gap:6px;
 }
-.stat-card-top .kicker{
-  font-size:clamp(9px, 1.3vh, 10.5px);
-  min-width:0;
-  flex:1 1 auto;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  letter-spacing:.5px;
-}
-.stat-badge{
-  font-size:clamp(8px, 1.1vh, 9px);
-  font-weight:800;
-  padding:2px 6px;
-  border-radius:4px;
-  background:#1a2321;
-  color:var(--text-dim);
+.stat-card-title{
+  font-size:clamp(9.5px, 1.3vh, 11px);
+  font-weight:750;
+  letter-spacing:.8px;
+  color:var(--text-secondary);
   text-transform:uppercase;
-  letter-spacing:.3px;
   white-space:nowrap;
-  flex:0 0 auto;
-  max-width:48%;
   overflow:hidden;
   text-overflow:ellipsis;
-  transition:all .3s ease;
 }
 .stat-value-group{
   display:flex;
   align-items:baseline;
-  gap:3px;
-  margin-top:clamp(1px,0.4vh,4px);
+  gap:4px;
+  margin-top:clamp(2px, 0.4vh, 5px);
 }
 .stat-value{
-  font-size:clamp(18px,2.9vh,25px);
+  font-size:clamp(20px, 3.4vh, 28px);
   font-weight:900;
   line-height:1;
   color:var(--text-primary);
   transition:color .3s ease;
 }
 .stat-unit{
-  font-size:clamp(9px,1.3vh,11px);
+  font-size:clamp(10px, 1.4vh, 12px);
   font-weight:700;
   color:var(--text-secondary);
 }
 
-/* Exception-based UI: 임계치 반응 상태 클래스 */
-.stat-card.state-cold{
-  border-color:rgba(56,189,248,0.4);
-}
-.stat-card.state-cold .stat-badge{
-  background:rgba(56,189,248,0.18);
-  color:var(--cyan);
-}
-.stat-card.state-cold .stat-value{
-  color:var(--cyan);
-}
-
+/* Exception-based 상태 스타일 (경고 시 앰버/레드 테두리 및 텍스트 점등) */
 .stat-card.state-warn{
-  border-color:rgba(245,158,11,0.5);
-  box-shadow:0 0 10px rgba(245,158,11,0.15);
-}
-.stat-card.state-warn .stat-badge{
-  background:rgba(245,158,11,0.2);
-  color:var(--amber);
+  border-color:rgba(245,158,11,0.65);
+  box-shadow:0 0 12px var(--amber-glow);
 }
 .stat-card.state-warn .stat-value{
   color:var(--amber);
 }
-
 .stat-card.state-danger{
-  border-color:rgba(255,43,55,0.7);
+  border-color:rgba(255,59,71,0.75);
   box-shadow:0 0 14px var(--red-glow);
   animation:border-pulse 1.4s infinite;
-}
-.stat-card.state-danger .stat-badge{
-  background:rgba(255,43,55,0.25);
-  color:var(--red);
 }
 .stat-card.state-danger .stat-value{
   color:var(--red);
 }
+.stat-card.state-cold{
+  border-color:rgba(56,189,248,0.45);
+}
+.stat-card.state-cold .stat-value{
+  color:var(--cyan);
+}
 @keyframes border-pulse{
-  0%,100%{border-color:rgba(255,43,55,0.7)}
-  50%{border-color:rgba(255,43,55,0.25)}
+  0%,100%{border-color:rgba(255,59,71,0.75)}
+  50%{border-color:rgba(255,59,71,0.3)}
 }
 
-/* 5. 미연결 시 표시되는 하단 기본 컨트롤 바 */
+/* 5. 오디오 비주얼라이저 데코 바 */
+.visualizer-box{
+  flex:0 0 auto;
+  width:100%;
+  height:clamp(14px, 2.2vh, 22px);
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:2px;
+  padding:2px 4px;
+  border-radius:6px;
+  background:#0c1110;
+  border:1px solid #16201d;
+  overflow:hidden;
+}
+.viz-bar{
+  flex:1;
+  background:var(--mint);
+  opacity:.65;
+  border-radius:2px;
+  height:20%;
+  min-height:3px;
+  transition:height .08s ease;
+}
+
+/* 6. 하단 컨트롤 바 (연결 시 자동 숨김) */
 .bottom-controls{
   flex:0 0 auto;
   display:flex;
   flex-direction:column;
-  gap:clamp(4px, 0.8vh, 6px);
+  gap:6px;
   width:100%;
 }
-.bottom-controls .main-connect-btn{
+.main-action-btn{
   width:100%;
   padding:clamp(9px, 1.4vh, 12px);
   font-size:clamp(12px, 1.8vh, 14px);
   font-weight:800;
-}
-.bottom-sub-btns{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:clamp(4px, 0.8vh, 6px);
-  width:100%;
-}
-.bottom-sub-btns .btn{
-  width:100%;
-  padding:clamp(6px, 1vh, 9px);
-  font-size:clamp(10px, 1.4vh, 11.5px);
-  background:#16201d;
-  border:1px solid #23312c;
-  color:var(--text-secondary);
-  font-weight:700;
-}
-.bottom-sub-btns .btn:hover{
-  background:#202c28;
-  color:var(--text-primary);
-}
-.bottom-sub-btns .btn.is-active, .modal-grid .btn.is-active{
-  background:rgba(16,185,129,0.15);
-  border-color:rgba(16,185,129,0.4);
-  color:var(--green);
-}
-.btn{
+  background:var(--mint);
+  color:#04150f;
   border:0;
   border-radius:var(--radius-sm);
-  padding:clamp(8px,1.4vh,11px) clamp(12px,2vw,16px);
-  background:#1e2926;
-  color:var(--text-primary);
-  font-size:clamp(11px,1.6vh,13px);
-  font-weight:750;
   cursor:pointer;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:6px;
+  gap:8px;
+  box-shadow:0 2px 10px var(--mint-glow);
   transition:all .2s ease;
 }
-.btn:hover{background:#2a3834}
-.btn:active{transform:scale(0.98)}
-.btn.primary{
-  background:var(--red);
-  color:#fff;
-  box-shadow:0 2px 10px var(--red-glow);
-}
-.btn.primary:hover{background:#ff4752}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+.main-action-btn:hover{background:#1affaa}
+.main-action-btn:active{transform:scale(0.98)}
 
-/* 연결 완료 시 컨트롤 바 숨김 */
+.bottom-sub-btns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  width:100%;
+}
+.sub-btn{
+  width:100%;
+  padding:clamp(6px, 1vh, 9px);
+  font-size:clamp(10px, 1.4vh, 11.5px);
+  background:#141c1a;
+  border:1px solid #202b28;
+  color:var(--text-secondary);
+  font-weight:700;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.sub-btn:hover{background:#1d2724;color:var(--text-primary)}
+.sub-btn.is-active{
+  background:rgba(0,230,153,0.15);
+  border-color:rgba(0,230,153,0.4);
+  color:var(--mint);
+}
+
+/* 연결 완료 시 메인 하단 바 자동 숨김 */
 body.is-connected .bottom-controls{
   display:none;
 }
 
-/* 6. 설정 모달 / 드로어 오버레이 */
+/* 7. 설정 모달 / 드로어 */
 .modal-backdrop{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.75);
+  background:rgba(0,0,0,0.8);
   backdrop-filter:blur(6px);
   z-index:900;
   display:none;
@@ -524,15 +499,15 @@ body.is-connected .bottom-controls{
 }
 .modal-sheet{
   width:100%;
-  max-width:420px;
-  background:#111816;
-  border:1px solid #23312d;
+  max-width:400px;
+  background:#121716;
+  border:1px solid #23312c;
   border-radius:20px;
   padding:18px;
   display:flex;
   flex-direction:column;
-  gap:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.8);
+  gap:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.85);
   transform:translateY(10px);
   transition:transform .2s ease;
 }
@@ -543,13 +518,12 @@ body.is-connected .bottom-controls{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  border-bottom:1px solid #1a2522;
+  border-bottom:1px solid #1c2724;
   padding-bottom:10px;
 }
 .modal-title{
   font-size:14px;
   font-weight:800;
-  letter-spacing:.5px;
   color:var(--text-primary);
 }
 .modal-grid{
@@ -557,9 +531,22 @@ body.is-connected .bottom-controls{
   grid-template-columns:1fr 1fr;
   gap:8px;
 }
-.modal-grid .btn{
-  width:100%;
-  padding:11px;
+.btn{
+  border:0;
+  border-radius:var(--radius-sm);
+  padding:10px;
+  background:#18221f;
+  color:var(--text-primary);
+  font-size:12px;
+  font-weight:750;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.btn:hover{background:#23302b}
+.btn.is-active{
+  background:rgba(0,230,153,0.15);
+  border:1px solid rgba(0,230,153,0.4);
+  color:var(--mint);
 }
 #diagnosticsBox{
   display:none;
@@ -571,126 +558,96 @@ body.is-connected .bottom-controls{
   font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
   white-space:pre-wrap;
   word-break:break-all;
-  max-height:140px;
+  max-height:130px;
   overflow-y:auto;
   color:#94a3b8;
 }
 
-/* Fold5 전면 화면 및 세로 좁은 폰 최적화 (max-width: 520px) */
-@media(max-width:520px){
+/* ========================================================
+   ★ 가로 모드 (ORIENTATION: LANDSCAPE) 레이아웃
+   ======================================================== */
+@media (orientation: landscape) {
   .app{
-    padding:clamp(6px, 1.2vh, 10px) clamp(8px, 2vw, 12px);
-    gap:clamp(5px, 1vh, 8px);
+    padding:clamp(6px, 1.8vh, 12px) clamp(12px, 3vw, 24px);
+    gap:clamp(6px, 1.5vh, 10px);
   }
   header{
-    min-height:26px;
+    min-height:24px;
   }
-  .rpm-section{
-    padding:clamp(5px, 0.9vh, 8px) clamp(8px, 1.8vw, 12px);
-    gap:clamp(3px, 0.6vh, 6px);
-  }
-  .rpm-digital{
-    font-size:clamp(20px, 3.2vh, 26px);
-  }
-  .rpm-bar-container{
-    height:clamp(12px, 1.8vh, 16px);
+  
+  /* 가로 모드 메인 프레임: 3열 분할 (좌측 날개 - 중앙 클러스터 - 우측 날개) */
+  .landscape-dashboard-row{
+    flex:1 1 auto;
+    min-height:0;
+    display:grid;
+    grid-template-columns:1fr 1.6fr 1fr;
+    gap:clamp(10px, 2.5vw, 20px);
+    align-items:center;
+    width:100%;
   }
 
-  /* 1. SPEED / BOOST 위·아래 1열 배치 전환 */
-  .main-gauges-row{
-    grid-template-columns:1fr;
-    gap:clamp(6px, 1vh, 8px);
-  }
-  .gauge-card{
-    padding:clamp(6px, 0.9vh, 8px) clamp(10px, 2.5vw, 14px);
-    gap:clamp(2px, 0.5vh, 4px);
-  }
-  .gauge-card-header{
-    width:100%;
-    margin-bottom:2px;
-  }
-  /* 가로형 레이아웃 (왼쪽: 아크 게이지 / 오른쪽: 큰 숫자 + 단위) */
-  .gauge-body{
-    display:grid;
-    grid-template-columns:1.15fr 1fr;
-    align-items:center;
-    column-gap:10px;
-    width:100%;
-  }
-  .gauge-svg-wrap{
-    width:100%;
-    max-width:175px;
-    margin:0 auto;
-    height:auto;
-  }
-  .gauge-svg{
-    width:100%;
-    height:auto;
-    max-height:clamp(75px, 11.5vh, 98px);
-  }
-  .gauge-info-wrap{
-    position:static;
+  /* 좌측 날개 (COOLANT, OIL) */
+  .wing-left{
     display:flex;
     flex-direction:column;
-    align-items:flex-start;
+    gap:clamp(8px, 2vh, 14px);
+    height:100%;
     justify-content:center;
-    padding-left:4px;
-    pointer-events:auto;
-  }
-  .gauge-num{
-    font-size:clamp(38px, 5.8vh, 52px);
-    font-weight:950;
-    line-height:.92;
-  }
-  .gauge-unit{
-    font-size:clamp(11px, 1.6vh, 13px);
-    font-weight:800;
-    margin-top:2px;
   }
 
-  /* 2. 하단 보조 지표 2열 그리드 (2x2) - 너비 벗어남 방지 */
-  .sub-stats-row{
-    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-    gap:clamp(5px, 0.9vh, 7px);
+  /* 중앙 클러스터 (대형 RPM 아크 + 통합 속도/RPM) */
+  .main-cluster{
     width:100%;
-    box-sizing:border-box;
+    height:100%;
+    justify-content:center;
   }
-  .stat-card{
-    padding:clamp(5px, 0.8vh, 8px) clamp(6px, 1.2vw, 10px);
-    min-height:clamp(50px, 7.8vh, 66px);
-    min-width:0;
-    box-sizing:border-box;
+  .rpm-arc-box{
+    max-width:380px;
   }
-  .stat-card.span-full{
-    grid-column:span 2;
+  .rpm-svg{
+    max-height:clamp(130px, 45vh, 210px);
   }
-  .stat-value{
-    font-size:clamp(17px, 2.6vh, 23px);
+  /* 가로 모드에서는 아크 내부 중앙에 속도와 RPM이 통합 표시됨 */
+  .rpm-center-data{
+    display:none; /* 세로 전용 숨김 */
+  }
+  .speed-cluster{
+    display:none; /* 세로 전용 숨김 */
+  }
+  .landscape-center-info{
+    display:flex; /* 가로 전용 표시 */
+  }
+
+  /* 우측 날개 (BOOST, BATT) */
+  .wing-right{
+    display:flex;
+    flex-direction:column;
+    gap:clamp(8px, 2vh, 14px);
+    height:100%;
+    justify-content:center;
+  }
+  .wing-right .stat-card, .wing-left .stat-card{
+    min-height:clamp(60px, 18vh, 90px);
+  }
+
+  /* 세로 전용 요소들 가로 모드에서 숨김/재배치 */
+  .sub-stats-grid{
+    display:none;
+  }
+  .boost-bar-card{
+    display:none;
   }
 }
 
-/* 가로 모드 (Landscape) / 태블릿 최적화 */
-@media(orientation:landscape) and (max-height:550px){
-  .app{
-    padding:6px 14px;
-    gap:6px;
+/* ========================================================
+   ★ 세로 모드 (ORIENTATION: PORTRAIT) 레이아웃
+   ======================================================== */
+@media (orientation: portrait) {
+  .landscape-dashboard-row{
+    display:contents;
   }
-  .rpm-section{
-    padding:5px 12px;
-    gap:4px;
-  }
-  .rpm-bar-container{
-    height:13px;
-  }
-  .gauge-svg{
-    max-height:100px;
-  }
-  .gauge-num{
-    font-size:36px;
-  }
-  .stat-card{
-    min-height:52px;
-    padding:5px 10px;
+  .wing-left, .wing-right{
+    display:contents;
   }
 }
 </style>
@@ -698,7 +655,7 @@ body.is-connected .bottom-controls{
 <body>
 
 <main class="app" id="appMain">
-  <!-- 1. 미니멀 상단 바 -->
+  <!-- 1. 상단 미니멀 헤더 -->
   <header>
     <div class="brand-group">
       <span class="brand-title">OBD // DASH</span>
@@ -714,153 +671,160 @@ body.is-connected .bottom-controls{
     </div>
   </header>
 
-  <!-- 2. 상단 풀-폭 세그먼트 RPM 바 -->
-  <section class="rpm-section">
-    <div class="rpm-header">
-      <span class="kicker">ENGINE REVS</span>
-      <div class="rpm-val-group">
-        <span class="rpm-digital" id="rpmVal">0</span>
-        <span class="rpm-unit">RPM</span>
+  <!-- 가로/세로 유연한 대시보드 래퍼 -->
+  <div class="landscape-dashboard-row">
+    
+    <!-- [가로 모드 좌측 날개] COOLANT & OIL TEMP -->
+    <div class="wing-left">
+      <div class="stat-card" id="cardCoolantL">
+        <span class="stat-card-title">COOLANT</span>
+        <div class="stat-value-group">
+          <span class="stat-value" id="valCoolantL">--</span>
+          <span class="stat-unit">°C</span>
+        </div>
+      </div>
+      <div class="stat-card" id="cardOilL">
+        <span class="stat-card-title">OIL TEMP</span>
+        <div class="stat-value-group">
+          <span class="stat-value" id="valOilL">--</span>
+          <span class="stat-unit">°C</span>
+        </div>
       </div>
     </div>
-    <div class="rpm-bar-container" id="rpmBar">
-      <!-- JS에서 세그먼트 요소 36개 생성 -->
+
+    <!-- [중앙 메인 클러스터] RPM 대형 아크 + 속도계 -->
+    <section class="main-cluster">
+      <div class="rpm-arc-box">
+        <svg class="rpm-svg" viewBox="0 18 200 96" aria-label="RPM Arc Gauge">
+          <!-- 눈금 숫자 (0, 2, 4, 6, 8k) -->
+          <text x="18" y="106" font-size="8" fill="#4a5753" font-weight="700">0</text>
+          <text x="36" y="55" font-size="8" fill="#4a5753" font-weight="700">2</text>
+          <text x="96" y="28" font-size="8" fill="#4a5753" font-weight="700">4</text>
+          <text x="156" y="55" font-size="8" fill="#4a5753" font-weight="700">6</text>
+          <text x="175" y="106" font-size="8" fill="#ff3b47" font-weight="700">8k</text>
+
+          <!-- 베이스 트랙 -->
+          <path d="M 28 105 A 72 72 0 0 1 172 105" fill="none" stroke="#1b2421" stroke-width="12" stroke-linecap="round"/>
+          <!-- 레드존 표시 구간 (6.5k ~ 8k) -->
+          <path d="M 28 105 A 72 72 0 0 1 172 105" fill="none" stroke="rgba(255,59,71,0.5)" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="19 100" stroke-dashoffset="-81"/>
+          <!-- 활성 아크 채움선 -->
+          <path id="rpmArc" d="M 28 105 A 72 72 0 0 1 172 105" fill="none" stroke="var(--mint)" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease, stroke .2s ease;"/>
+        </svg>
+
+        <!-- [세로 모드] 아크 내부 RPM 수치 -->
+        <div class="rpm-center-data">
+          <span class="rpm-num" id="rpmVal">0</span>
+          <span class="rpm-unit">RPM</span>
+        </div>
+
+        <!-- [가로 모드 전용] 아크 내부 속도 + RPM 통합 디스플레이 -->
+        <div class="landscape-center-info">
+          <div class="landscape-speed-row">
+            <span class="landscape-speed-num" id="speedValL">0</span>
+            <span class="landscape-speed-unit">km/h</span>
+          </div>
+          <span class="landscape-rpm-num" id="rpmValL">0</span>
+        </div>
+      </div>
+
+      <!-- [세로 모드] 아크 아래 초대형 속도계 -->
+      <div class="speed-cluster">
+        <span class="speed-num" id="speedVal">0</span>
+        <span class="speed-unit">km/h</span>
+      </div>
+    </section>
+
+    <!-- [가로 모드 우측 날개] BOOST & BATTERY -->
+    <div class="wing-right">
+      <div class="stat-card" id="cardBoostL">
+        <span class="stat-card-title">BOOST</span>
+        <div class="stat-value-group">
+          <span class="stat-value" id="valBoostL">0.00</span>
+          <span class="stat-unit">bar</span>
+        </div>
+      </div>
+      <div class="stat-card" id="cardVoltL">
+        <span class="stat-card-title">BATT</span>
+        <div class="stat-value-group">
+          <span class="stat-value" id="valVoltL">--.-</span>
+          <span class="stat-unit">V</span>
+        </div>
+      </div>
     </div>
-    <div class="rpm-ticks-label">
-      <span>0</span>
-      <span>2</span>
-      <span>4</span>
-      <span>5.5</span>
-      <span class="red">6.5 RED</span>
-      <span class="red">8k</span>
+  </div>
+
+  <!-- [세로 모드 전용] BOOST 가로 막대형 카드 -->
+  <section class="boost-bar-card" id="boostBarCard">
+    <div class="boost-header">
+      <span class="kicker">BOOST</span>
+      <div class="boost-val-wrap">
+        <span class="boost-val" id="boostVal">0.00</span>
+        <span class="boost-unit">bar</span>
+      </div>
+    </div>
+    <div class="boost-track">
+      <div class="boost-fill" id="boostFill"></div>
     </div>
   </section>
 
-  <!-- 3. 중단 주력 듀얼 게이지 (BOOST & SPEED) -->
-  <section class="main-gauges-row">
-    <!-- SPEED 게이지 -->
-    <div class="gauge-card" id="speedCard">
-      <div class="gauge-card-header">
-        <span class="kicker">VEHICLE SPEED</span>
-      </div>
-      <div class="gauge-body">
-        <div class="gauge-svg-wrap">
-          <svg class="gauge-svg" viewBox="15 25 170 88" aria-label="Speed Gauge">
-            <!-- 정확한 180도 반원 눈금 Ticks (카드 밖 삐져나옴 원천 차단) -->
-            <g id="speedTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
-            <!-- 베이스 백그라운드 아크 (반원, 캡 라운드, 양끝 큰점 제거) -->
-            <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
-            <!-- 활성 아크 (빨강/화이트) - 0 상태에서는 opacity 0으로 점 제거 -->
-            <path id="speedArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease;"/>
-            <!-- 은은한 바늘 -->
-            <g id="speedNeedle" transform="rotate(-90 100 106)">
-              <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="100" cy="106" r="6" fill="#141c1a" stroke="#f5f7f6" stroke-width="2.5"/>
-            </g>
-          </svg>
-        </div>
-        <div class="gauge-info-wrap">
-          <span class="gauge-num" id="speedVal">0</span>
-          <span class="gauge-unit">km/h</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- BOOST 게이지 -->
-    <div class="gauge-card" id="boostCard">
-      <div class="gauge-card-header">
-        <span class="kicker">MANIFOLD BOOST</span>
-      </div>
-      <div class="gauge-body">
-        <div class="gauge-svg-wrap">
-          <svg class="gauge-svg" viewBox="15 25 170 88" aria-label="Boost Gauge">
-            <!-- 정확한 180도 반원 눈금 Ticks -->
-            <g id="boostTicks" stroke="#25332f" stroke-width="1.8" stroke-linecap="round"></g>
-            <!-- 베이스 아크 -->
-            <path d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="#1b2523" stroke-width="10" stroke-linecap="round"/>
-            <!-- 활성 아크 - 0 상태에서는 opacity 0으로 점 제거 -->
-            <path id="boostArc" d="M 25 106 A 75 75 0 0 1 175 106" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease;"/>
-            <!-- 은은한 바늘 -->
-            <g id="boostNeedle" transform="rotate(-90 100 106)">
-              <line x1="100" y1="106" x2="100" y2="36" stroke="#f5f7f6" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="100" cy="106" r="6" fill="#141c1a" stroke="#f5f7f6" stroke-width="2.5"/>
-            </g>
-          </svg>
-        </div>
-        <div class="gauge-info-wrap">
-          <span class="gauge-num" id="boostVal">0.00</span>
-          <span class="gauge-unit">bar</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 4. 하단 보조 지표 (컴팩트 카드 + Exception-based UI) -->
-  <section class="sub-stats-row">
-    <!-- COOLANT -->
+  <!-- [세로 모드 전용] 하단 보조 지표 (2×2 그리드) -->
+  <section class="sub-stats-grid" id="subStatsGrid">
     <div class="stat-card" id="cardCoolant">
-      <div class="stat-card-top">
-        <span class="kicker">COOLANT</span>
-        <span class="stat-badge" id="badgeCoolant">N/A</span>
-      </div>
+      <span class="stat-card-title">COOLANT</span>
       <div class="stat-value-group">
         <span class="stat-value" id="valCoolant">--</span>
         <span class="stat-unit">°C</span>
       </div>
     </div>
 
-    <!-- BATTERY -->
-    <div class="stat-card" id="cardVoltage">
-      <div class="stat-card-top">
-        <span class="kicker">BATTERY</span>
-        <span class="stat-badge" id="badgeVoltage">N/A</span>
+    <div class="stat-card" id="cardOil">
+      <span class="stat-card-title">OIL TEMP</span>
+      <div class="stat-value-group">
+        <span class="stat-value" id="valOil">--</span>
+        <span class="stat-unit">°C</span>
       </div>
+    </div>
+
+    <div class="stat-card" id="cardVoltage">
+      <span class="stat-card-title">BATTERY</span>
       <div class="stat-value-group">
         <span class="stat-value" id="valVoltage">--.-</span>
         <span class="stat-unit">V</span>
       </div>
     </div>
 
-    <!-- ENGINE LOAD (3개일 때 2열 차지하도록 span-full 기본 적용) -->
-    <div class="stat-card span-full" id="cardLoad">
-      <div class="stat-card-top">
-        <span class="kicker">LOAD</span>
-        <span class="stat-badge" id="badgeLoad">N/A</span>
-      </div>
+    <div class="stat-card" id="cardLoad">
+      <span class="stat-card-title">LOAD</span>
       <div class="stat-value-group">
         <span class="stat-value" id="valLoad">--</span>
         <span class="stat-unit">%</span>
       </div>
     </div>
-
-    <!-- OIL TEMP (미지원 시 자동 hidden) -->
-    <div class="stat-card" id="cardOil" style="display:none">
-      <div class="stat-card-top">
-        <span class="kicker">OIL TEMP</span>
-        <span class="stat-badge" id="badgeOil">N/A</span>
-      </div>
-      <div class="stat-value-group">
-        <span class="stat-value" id="valOil">--</span>
-        <span class="stat-unit">°C</span>
-      </div>
-    </div>
   </section>
 
-  <!-- 5. 미연결 시 표시되는 하단 기본 컨트롤 바 (연결되면 자동 숨김) -->
+  <!-- 오디오 비주얼라이저 데코 바 (세그먼트 애니메이션) -->
+  <div class="visualizer-box" id="visualizerBox">
+    <!-- JS에서 30개 바 자동 생성 -->
+  </div>
+
+  <!-- 미연결 시 표시되는 하단 기본 컨트롤 바 (연결 시 자동 숨김) -->
   <div class="bottom-controls" id="bottomControls">
-    <button class="btn primary main-connect-btn" id="connectBtn">CONNECT OBD-II</button>
+    <button class="main-action-btn" id="connectBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg>
+      CONNECT OBD-II
+    </button>
     <div class="bottom-sub-btns">
-      <button class="btn" id="quickFullscreenBtn">FULL SCREEN</button>
-      <button class="btn" id="quickWakeBtn">KEEP SCREEN ON</button>
+      <button class="sub-btn" id="quickFullscreenBtn">FULL SCREEN</button>
+      <button class="sub-btn" id="quickWakeBtn">KEEP SCREEN ON</button>
     </div>
   </div>
 </main>
 
-<!-- 6. 설정 & 제어 모달/드로어 -->
+<!-- 설정 & 제어 모달/드로어 -->
 <div class="modal-backdrop" id="settingsModal">
   <div class="modal-sheet">
     <div class="modal-header">
-      <span class="modal-title">DASHBOARD CONTROLS</span>
+      <span class="modal-title">DASHBOARD SETTINGS</span>
       <button class="icon-btn" id="closeSettingsBtn" aria-label="Close">
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
@@ -881,182 +845,148 @@ body.is-connected .bottom-controls{
 (() => {
 const $ = id => document.getElementById(id);
 
-// --- 1. SVG 눈금(Tick) 생성기 (각도 180° ~ 0° 정확 일치) ---
-function createTicks(containerId, count = 11, rIn = 63, rOut = 70) {
-  const g = $(containerId);
-  if (!g) return;
-  const cx = 100, cy = 106;
-  let html = '';
-  for (let i = 0; i <= count; i++) {
-    // 0 -> 180deg (좌), count -> 0deg (우)
-    const deg = 180 - (i * (180 / count));
-    const rad = deg * (Math.PI / 180);
-    const x1 = (cx - rIn * Math.cos(rad)).toFixed(1);
-    const y1 = (cy - rIn * Math.sin(rad)).toFixed(1);
-    const x2 = (cx - rOut * Math.cos(rad)).toFixed(1);
-    const y2 = (cy - rOut * Math.sin(rad)).toFixed(1);
-    html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" />`;
-  }
-  g.innerHTML = html;
+// --- 1. 비주얼라이저 데코 바 생성 ---
+const vizBox = $('visualizerBox');
+const VIZ_COUNT = 32;
+for (let i = 0; i < VIZ_COUNT; i++) {
+  const bar = document.createElement('div');
+  bar.className = 'viz-bar';
+  vizBox.appendChild(bar);
 }
-createTicks('speedTicks', 12, 60, 68);
-createTicks('boostTicks', 10, 60, 68);
+const vizBars = vizBox.children;
+let vizPhase = 0;
 
-// --- 2. 가로형 세그먼트 RPM 바 생성기 ---
-const TOTAL_SEGMENTS = 36;
-const rpmBarContainer = $('rpmBar');
-for (let i = 0; i < TOTAL_SEGMENTS; i++) {
-  const seg = document.createElement('div');
-  seg.className = 'rpm-segment';
-  // 0~65% norm(white), 65~82% warn(amber), 82~100% redzone
-  const ratio = i / TOTAL_SEGMENTS;
-  if (ratio >= 0.82) seg.dataset.type = 'redzone';
-  else if (ratio >= 0.65) seg.dataset.type = 'warn';
-  else seg.dataset.type = 'norm';
-  rpmBarContainer.appendChild(seg);
-}
-const rpmSegments = rpmBarContainer.children;
-
-function updateRpmBar(rpm, maxRpm = 8000) {
-  const activeCount = Math.min(TOTAL_SEGMENTS, Math.floor((rpm / maxRpm) * TOTAL_SEGMENTS));
-  for (let i = 0; i < TOTAL_SEGMENTS; i++) {
-    const seg = rpmSegments[i];
-    if (i < activeCount) {
-      seg.className = `rpm-segment active ${seg.dataset.type}`;
-    } else {
-      seg.className = 'rpm-segment';
+function animateVisualizer(active = true, intensity = 0.5) {
+  vizPhase += 0.15;
+  for (let i = 0; i < VIZ_COUNT; i++) {
+    if (!active) {
+      vizBars[i].style.height = '15%';
+      vizBars[i].style.opacity = '0.3';
+      continue;
     }
+    const wave1 = Math.sin(vizPhase + i * 0.4);
+    const wave2 = Math.cos(vizPhase * 0.7 + i * 0.25);
+    const h = Math.max(12, Math.min(100, Math.floor((Math.abs(wave1 * wave2) * 80 + 15) * (0.6 + intensity * 0.4))));
+    vizBars[i].style.height = h + '%';
+    vizBars[i].style.opacity = (0.4 + (h / 100) * 0.6).toFixed(2);
   }
 }
+setInterval(() => animateVisualizer(connected || demoActive, currentIntensity), 70);
 
-// --- 3. 아크 게이지 업데이트 (SPEED, BOOST) ---
-function updateArcGauge(prefix, val, min, max) {
-  const arc = $(prefix + 'Arc');
-  const needle = $(prefix + 'Needle');
-  if (!arc || !needle) return;
+let currentIntensity = 0.4;
 
-  if (val === null || !Number.isFinite(val) || val <= min) {
+// --- 2. RPM 아크 게이지 업데이트 ---
+function updateRpm(rpm, maxRpm = 8000) {
+  const arc = $('rpmArc');
+  if (!arc) return;
+  const rVal = Math.max(0, Math.min(maxRpm, Math.round(rpm || 0)));
+  
+  // 세로/가로 텍스트 동기화
+  $('rpmVal').textContent = rVal.toLocaleString('en-US');
+  $('rpmValL').textContent = rVal.toLocaleString('en-US');
+
+  if (rVal <= 10) {
     arc.style.opacity = '0';
     arc.setAttribute('stroke-dasharray', '0 100');
-    needle.setAttribute('transform', 'rotate(-90 100 106)');
     return;
   }
-  const ratio = Math.max(0, Math.min(1, (val - min) / (max - min)));
-  if (ratio <= 0.005) {
-    arc.style.opacity = '0';
+  arc.style.opacity = '1';
+  const ratio = rVal / maxRpm;
+  arc.setAttribute('stroke-dasharray', `${(ratio * 100).toFixed(1)} 100`);
+  
+  // 6500 RPM 이상 시 레드존 점등
+  if (rVal >= 6500) {
+    arc.setAttribute('stroke', 'var(--red)');
   } else {
-    arc.style.opacity = '1';
-    arc.setAttribute('stroke-dasharray', `${(ratio * 100).toFixed(1)} 100`);
+    arc.setAttribute('stroke', 'var(--mint)');
   }
-  // -90deg(좌) -> +90deg(우)
-  const angle = (-90 + ratio * 180).toFixed(1);
-  needle.setAttribute('transform', `rotate(${angle} 100 106)`);
+
+  currentIntensity = Math.min(1.0, 0.3 + (rVal / maxRpm) * 0.7);
 }
 
-// --- 4. Exception-based 보조 지표 상태 관리 ---
+// --- 3. 속도 업데이트 ---
+function updateSpeed(spd) {
+  const sVal = spd === null ? 0 : Math.round(spd);
+  $('speedVal').textContent = sVal;
+  $('speedValL').textContent = sVal;
+}
+
+// --- 4. 부스트 업데이트 ---
+function updateBoost(boost) {
+  const bVal = boost === null ? 0 : Math.max(0, boost);
+  const text = bVal.toFixed(2);
+  $('boostVal').textContent = text;
+  $('valBoostL').textContent = text;
+
+  // 세로 모드 바 채움 (최대 2.0 bar 기준)
+  const ratio = Math.max(0, Math.min(1, bVal / 2.0));
+  $('boostFill').style.width = (ratio * 100).toFixed(1) + '%';
+}
+
+// --- 5. 보조 지표 업데이트 (Exception-based UI) ---
 function updateCoolant(temp) {
-  const card = $('cardCoolant');
-  const valEl = $('valCoolant');
-  const badge = $('badgeCoolant');
-  if (temp === null || temp === undefined) {
-    valEl.textContent = '--';
-    card.className = 'stat-card';
-    badge.textContent = 'N/A';
-    return;
-  }
-  valEl.textContent = Math.round(temp);
-  card.className = 'stat-card';
+  const text = (temp === null || temp === undefined) ? '--' : Math.round(temp);
+  $('valCoolant').textContent = text;
+  $('valCoolantL').textContent = text;
 
-  if (temp < 60) {
-    card.classList.add('state-cold');
-    badge.textContent = 'WARMUP';
-  } else if (temp >= 108) {
-    card.classList.add('state-danger');
-    badge.textContent = 'HOT!';
-  } else if (temp >= 100) {
-    card.classList.add('state-warn');
-    badge.textContent = 'HIGH';
-  } else {
-    badge.textContent = 'NORMAL';
-  }
-}
-
-function updateBattery(volts) {
-  const card = $('cardVoltage');
-  const valEl = $('valVoltage');
-  const badge = $('badgeVoltage');
-  if (volts === null || volts === undefined) {
-    valEl.textContent = '--.-';
-    card.className = 'stat-card';
-    badge.textContent = 'N/A';
-    return;
-  }
-  valEl.textContent = volts.toFixed(1);
-  card.className = 'stat-card';
-
-  if (volts < 12.0) {
-    card.classList.add('state-danger');
-    badge.textContent = 'LOW';
-  } else if (volts < 12.5) {
-    card.classList.add('state-warn');
-    badge.textContent = 'WARN';
-  } else if (volts > 15.0) {
-    card.classList.add('state-danger');
-    badge.textContent = 'HIGH';
-  } else {
-    badge.textContent = 'GOOD';
-  }
-}
-
-let oilSupported = false;
-
-function updateEngineLoad(load) {
-  const card = $('cardLoad');
-  const valEl = $('valLoad');
-  const badge = $('badgeLoad');
-  if (load === null || load === undefined) {
-    valEl.textContent = '--';
-    card.className = 'stat-card' + (oilSupported ? '' : ' span-full');
-    badge.textContent = 'N/A';
-    return;
-  }
-  valEl.textContent = Math.round(load);
-  card.className = 'stat-card' + (oilSupported ? '' : ' span-full');
-
-  if (load >= 85) {
-    card.classList.add('state-warn');
-    badge.textContent = 'PEAK';
-  } else {
-    badge.textContent = 'NORMAL';
-  }
+  const cards = [$('cardCoolant'), $('cardCoolantL')];
+  cards.forEach(c => {
+    if (!c) return;
+    c.className = 'stat-card';
+    if (temp !== null && temp !== undefined) {
+      if (temp < 60) c.classList.add('state-cold');
+      else if (temp >= 108) c.classList.add('state-danger');
+      else if (temp >= 100) c.classList.add('state-warn');
+    }
+  });
 }
 
 function updateOilTemp(temp) {
-  const card = $('cardOil');
-  const valEl = $('valOil');
-  const badge = $('badgeOil');
-  const loadCard = $('cardLoad');
-  if (temp === null || temp === undefined) {
-    oilSupported = false;
-    card.style.display = 'none'; // 미지원 시 자동 숨김
-    badge.textContent = 'N/A';
-    if (loadCard) loadCard.classList.add('span-full');
-    return;
-  }
-  oilSupported = true;
-  card.style.display = 'flex';
-  if (loadCard) loadCard.classList.remove('span-full');
-  valEl.textContent = Math.round(temp);
+  const text = (temp === null || temp === undefined) ? '--' : Math.round(temp);
+  $('valOil').textContent = text;
+  $('valOilL').textContent = text;
+
+  const cards = [$('cardOil'), $('cardOilL')];
+  cards.forEach(c => {
+    if (!c) return;
+    c.className = 'stat-card';
+    if (temp !== null && temp !== undefined) {
+      if (temp >= 125) c.classList.add('state-danger');
+      else if (temp >= 115) c.classList.add('state-warn'); // 시안처럼 121도일 때 앰버 경고 점등
+    }
+  });
+}
+
+function updateBattery(volts) {
+  const text = (volts === null || volts === undefined) ? '--.-' : volts.toFixed(1);
+  $('valVoltage').textContent = text;
+  $('valVoltL').textContent = text;
+
+  const cards = [$('cardVoltage'), $('cardVoltL')];
+  cards.forEach(c => {
+    if (!c) return;
+    c.className = 'stat-card';
+    if (volts !== null && volts !== undefined) {
+      if (volts < 12.0) c.classList.add('state-danger');
+      else if (volts < 12.5) c.classList.add('state-warn');
+      else if (volts > 15.0) c.classList.add('state-danger');
+    }
+  });
+}
+
+function updateEngineLoad(load) {
+  const text = (load === null || load === undefined) ? '--' : Math.round(load);
+  $('valLoad').textContent = text;
+
+  const card = $('cardLoad');
+  if (!card) return;
   card.className = 'stat-card';
-  if (temp >= 125) {
-    card.classList.add('state-danger');
-    badge.textContent = 'HOT!';
-  } else {
-    badge.textContent = 'NORMAL';
+  if (load !== null && load !== undefined && load >= 85) {
+    card.classList.add('state-warn');
   }
 }
 
-// --- 5. BLE OBD-II 통신 및 상태 관리 ---
+// --- 6. BLE OBD-II 통신 및 상태 관리 ---
 const UUIDS = [
   {name:"ELM BLE FFF0",service:"0000fff0-0000-1000-8000-00805f9b34fb",notify:"0000fff1-0000-1000-8000-00805f9b34fb",write:"0000fff2-0000-1000-8000-00805f9b34fb"},
   {name:"ELM BLE FFE0",service:"0000ffe0-0000-1000-8000-00805f9b34fb",notify:"0000ffe1-0000-1000-8000-00805f9b34fb",write:"0000ffe1-0000-1000-8000-00805f9b34fb"},
@@ -1076,7 +1006,7 @@ const log = s => {
   $('diagnosticsBox').textContent = logLines.join("\n");
 };
 
-function setUIConnectedState(mode) { // 'connected', 'demo', 'disconnected'
+function setUIConnectedState(mode) {
   const pill = $('statusPill');
   const txt = $('statusText');
   const disBtn = $('disconnectBtn');
@@ -1244,19 +1174,12 @@ async function poll() {
 
   try {
     while (connected) {
-      // 1순위: 속도 & RPM
+      // 1순위: RPM & 속도
       const speed = await pid("0D", 1, a => a);
-      if (speed !== null) {
-        const sVal = Math.round(speed);
-        $('speedVal').textContent = sVal;
-        updateArcGauge('speed', sVal, 0, 240);
-      }
+      if (speed !== null) updateSpeed(speed);
 
       const rpm = await pid("0C", 2, (a, b) => Math.round((a * 256 + b) / 4));
-      if (rpm !== null) {
-        $('rpmVal').textContent = rpm.toLocaleString('en-US');
-        updateRpmBar(rpm);
-      }
+      if (rpm !== null) updateRpm(rpm);
 
       // 2순위: 완만한 지표 순차 조회
       try {
@@ -1267,14 +1190,13 @@ async function poll() {
         if (slowIndex === 4) baroVal = res;
         if (mapVal !== null && baroVal !== null) {
           const boost = Math.max(0, (mapVal - baroVal) / 100);
-          $('boostVal').textContent = boost.toFixed(2);
-          updateArcGauge('boost', boost, 0, 2.0);
+          updateBoost(boost);
         }
       } catch (err) {
         log("PID sub: " + err.message);
       }
 
-      await delay(100);
+      await delay(90);
     }
   } catch (e) {
     log("Polling stopped: " + e.message);
@@ -1288,7 +1210,7 @@ async function startBLE() {
     alert("이 브라우저는 Web Bluetooth를 지원하지 않습니다. Chrome/Android 환경에서 이용하세요.");
     return;
   }
-  // 1) 자동 루틴: 사용자 제스처 컨텍스트에서 화면 유지(WakeLock) 즉시 요청
+  // 1) 사용자 제스처 컨텍스트에서 WakeLock 즉시 요청
   if (autoRoutine) {
     await enableWakeLock();
   }
@@ -1317,7 +1239,7 @@ async function startBLE() {
     }
     setUIConnectedState('connected');
 
-    // 2) BLE 연결 성공 직후: 자동 풀스크린 진입 (안전한 예외 처리)
+    // 2) BLE 연결 성공 직후: 자동 풀스크린 진입
     if (autoRoutine) {
       await requestFullscreenSafe();
     }
@@ -1336,12 +1258,11 @@ function disconnectBLE() {
   connected = false;
   if (device?.gatt?.connected) device.gatt.disconnect();
   setUIConnectedState('disconnected');
-  // Wake Lock & 풀스크린 깔끔 해제
   disableWakeLock();
   exitFullscreenSafe();
 }
 
-// --- 6. DEMO 모드 (시뮬레이터) ---
+// --- 7. DEMO 모드 (시뮬레이터) ---
 let demoActive = false;
 let demoTimer = null;
 let demoPhase = 0;
@@ -1357,18 +1278,18 @@ function startDemo() {
   let currentRpm = 850;
   let targetSpeed = 0;
   let gear = 1;
-  let coolantSim = 54; // 예열 54°C부터 시작해 상태 변화 시연
+  let coolantSim = 54;
+  let oilSim = 95;
   let voltSim = 12.3;
 
   demoTimer = setInterval(() => {
     demoPhase += 0.05;
 
-    // 가속 / 감속 시뮬레이션
     const cycle = Math.sin(demoPhase * 0.4);
     if (cycle > 0) {
-      targetSpeed = 40 + cycle * 120; // 최고 160km/h
+      targetSpeed = 40 + cycle * 125;
     } else {
-      targetSpeed = 20 + Math.abs(cycle) * 30;
+      targetSpeed = 20 + Math.abs(cycle) * 35;
     }
     currentSpeed += (targetSpeed - currentSpeed) * 0.08;
 
@@ -1386,38 +1307,28 @@ function startDemo() {
       gear = 4;
       currentRpm = 2800 + (currentSpeed - 105) * 60;
     }
-    // 급가속 시 RPM 튐
     if (cycle > 0.8) currentRpm = Math.min(7600, currentRpm + 1800);
 
-    // 부스트 계산
-    const boostSim = Math.max(0, (currentRpm > 3000 ? (currentRpm - 2500) / 3800 : 0.1) * (cycle > 0 ? 1.2 : 0.2));
+    const boostSim = Math.max(0, (currentRpm > 3000 ? (currentRpm - 2500) / 3800 : 0.1) * (cycle > 0 ? 1.25 : 0.2));
 
-    // 수온 시뮬레이션 (서서히 54°C -> 90°C 정상 -> 106°C 경고)
+    // 수온 & 유온 시뮬레이션
     coolantSim += 0.08;
-    if (coolantSim > 110) coolantSim = 75;
+    if (coolantSim > 105) coolantSim = 88;
 
-    // 전압 시뮬레이션
-    voltSim = 14.1 + Math.sin(demoPhase) * 0.3;
+    oilSim = coolantSim + 33; // 121도 도달 시뮬레이션
+    if (oilSim > 130) oilSim = 98;
 
-    // 부하율
+    voltSim = 13.8 + Math.sin(demoPhase) * 0.3;
     const loadSim = Math.min(96, Math.max(18, (currentRpm / 7500) * 100));
 
     // UI 반영
-    const sDisplay = Math.round(currentSpeed);
-    const rDisplay = Math.round(currentRpm);
-    $('speedVal').textContent = sDisplay;
-    updateArcGauge('speed', sDisplay, 0, 240);
-
-    $('rpmVal').textContent = rDisplay.toLocaleString('en-US');
-    updateRpmBar(rDisplay);
-
-    $('boostVal').textContent = boostSim.toFixed(2);
-    updateArcGauge('boost', boostSim, 0, 2.0);
-
+    updateSpeed(currentSpeed);
+    updateRpm(currentRpm);
+    updateBoost(boostSim);
     updateCoolant(coolantSim);
+    updateOilTemp(oilSim);
     updateBattery(voltSim);
     updateEngineLoad(loadSim);
-    updateOilTemp(coolantSim + 5);
   }, 60);
 }
 
@@ -1429,21 +1340,18 @@ function stopDemo() {
   $('modalDemoBtn').textContent = 'DEMO MODE: OFF';
   $('modalDemoBtn').classList.remove('is-active');
 
-  // 수치 리셋
-  $('speedVal').textContent = '0';
-  updateArcGauge('speed', 0, 0, 240);
-  $('rpmVal').textContent = '0';
-  updateRpmBar(0);
-  $('boostVal').textContent = '0.00';
-  updateArcGauge('boost', 0, 0, 2.0);
+  // 리셋
+  updateSpeed(0);
+  updateRpm(0);
+  updateBoost(0);
   updateCoolant(null);
+  updateOilTemp(null);
   updateBattery(null);
   updateEngineLoad(null);
-  updateOilTemp(null);
 }
 
-// --- 7. 화면 유지(WakeLock) & 풀스크린 & 제어 루틴 ---
-let autoRoutine = localStorage.getItem('obd_auto_routine') !== 'false'; // 기본값 true
+// --- 8. 화면 유지(WakeLock) & 풀스크린 & 제어 루틴 ---
+let autoRoutine = localStorage.getItem('obd_auto_routine') !== 'false';
 
 function updateAutoRoutineButton() {
   const btn = $('autoRoutineBtn');
@@ -1544,7 +1452,7 @@ document.addEventListener('fullscreenchange', () => {
   updateFullscreenButtons(!!document.fullscreenElement);
 });
 
-// --- 8. 이벤트 바인딩 ---
+// --- 9. 이벤트 바인딩 ---
 $('connectBtn').onclick = startBLE;
 $('disconnectBtn').onclick = () => {
   if (demoActive) stopDemo();
@@ -1563,15 +1471,11 @@ $('modalDemoBtn').onclick = () => {
   else startDemo();
 };
 
-// 퀵 버튼 (메인 화면 하단)
 $('quickFullscreenBtn').onclick = toggleFullscreen;
 $('quickWakeBtn').onclick = toggleWakeLock;
-
-// 설정 모달 버튼
 $('fullscreenBtn').onclick = toggleFullscreen;
 $('wakeLockBtn').onclick = toggleWakeLock;
 
-// 모달 제어
 $('openSettingsBtn').onclick = () => $('settingsModal').classList.add('open');
 $('closeSettingsBtn').onclick = () => $('settingsModal').classList.remove('open');
 $('settingsModal').onclick = e => {
@@ -1587,11 +1491,9 @@ $('toggleLogBtn').onclick = () => {
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then(reg => {
-      // 주기적 및 진입 시 업데이트 확인
       reg.update();
     }).catch(e => log("SW Err: " + e.message));
 
-    // 새 서비스 워커가 제어권을 가져오면 즉시 화면 갱신
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!refreshing) {
