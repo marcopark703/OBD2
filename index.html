@@ -364,67 +364,16 @@ header{
   position:relative;
   flex:0 0 auto;
   width:100%;
-  height:clamp(48px, 7.2vh, 68px);
+  height:clamp(96px, 14.4vh, 136px);
   border-radius:10px;
-  background:linear-gradient(180deg,#0b1420 0%,#080d14 100%);
-  border:1px solid #1a3048;
+  background:linear-gradient(180deg,#0b1512 0%,#080f0d 100%);
+  border:1px solid #18372c;
   overflow:hidden;
   cursor:pointer;
   touch-action:manipulation;
-  box-shadow:inset 0 0 18px rgba(22,100,190,.08);
+  box-shadow:inset 0 0 22px rgba(0,220,145,.07);
 }
 #vizCanvas{display:block;width:100%;height:100%}
-.viz-hud{
-  position:absolute;inset:7px 10px auto;
-  display:flex;justify-content:space-between;align-items:center;
-  pointer-events:none;
-  color:#8ba9c6;font-size:9px;font-weight:800;letter-spacing:1.1px;
-  text-shadow:0 1px 5px #000;
-}
-.viz-hud .audio-state{color:#58cfff}
-.viz-hint{
-  position:absolute;left:0;right:0;bottom:5px;text-align:center;
-  color:#6e8aa6;font-size:8px;letter-spacing:1.5px;
-  pointer-events:none;
-}
-.viz-stop{
-  display:none;position:absolute;right:14px;top:12px;z-index:3;
-  border:1px solid rgba(105,174,230,.45);border-radius:20px;
-  padding:8px 13px;background:rgba(8,18,30,.78);color:#c5e8ff;
-  font-size:11px;font-weight:800;letter-spacing:1px;
-}
-.viz-levels{
-  display:none;position:absolute;left:5%;right:5%;bottom:22px;
-  grid-template-columns:repeat(3,1fr);gap:10px;pointer-events:none;
-}
-.viz-level{text-align:center;color:#7f9ab4;font-size:10px;letter-spacing:1px}
-.viz-level strong{display:block;margin-top:4px;color:#bceaff;font-size:18px;font-weight:600}
-body.viz-fullscreen #appMain{display:contents}
-body.viz-fullscreen #appMain>header,
-body.viz-fullscreen #appMain>.dashboard-grid,
-body.viz-fullscreen #appMain>#bottomControls,
-body.viz-fullscreen #settingsModal{display:none!important}
-body.viz-fullscreen #visualizerBox,
-#visualizerBox:fullscreen{
-  position:fixed;inset:0;width:100vw;height:100dvh;z-index:2000;
-  border:0;border-radius:0;background:
-    radial-gradient(ellipse at 50% 65%,rgba(12,76,135,.22),transparent 58%),
-    linear-gradient(180deg,#050a12 0%,#07111d 100%);
-  box-shadow:none;overflow:hidden;cursor:default;
-}
-body.viz-fullscreen .viz-hud,
-#visualizerBox:fullscreen .viz-hud{inset:22px 24px auto;font-size:11px}
-body.viz-fullscreen .viz-hint,
-#visualizerBox:fullscreen .viz-hint{bottom:18px;font-size:10px}
-body.viz-fullscreen .viz-stop,
-#visualizerBox:fullscreen .viz-stop{display:block}
-body.viz-fullscreen .viz-levels,
-#visualizerBox:fullscreen .viz-levels{display:grid}
-@media (orientation:landscape){
-  body.viz-fullscreen .viz-levels,
-  #visualizerBox:fullscreen .viz-levels{left:18%;right:18%;bottom:24px}
-}
-
 /* 6. 하단 컨트롤 바 (연결 시 자동 숨김) */
 .bottom-controls{
   flex:0 0 auto;
@@ -767,19 +716,8 @@ body.is-connected .bottom-controls{
   </div>
 
   <!-- 3. 오디오 비주얼라이저 데코 바 -->
-  <div class="visualizer-box" id="visualizerBox" role="button" tabindex="0" aria-label="오디오 비주얼라이저 전체 화면 전환">
+  <div class="visualizer-box" id="visualizerBox" role="button" tabindex="0" aria-label="오디오 비주얼라이저 마이크 시작 또는 정지">
     <canvas id="vizCanvas"></canvas>
-    <div class="viz-hud">
-      <span>ESSENZA // AUDIO</span>
-      <span class="audio-state" id="audioStatus">MIC OFF</span>
-    </div>
-    <div class="viz-hint" id="vizHint">TOUCH TO START & EXPAND</div>
-    <div class="viz-levels">
-      <div class="viz-level">BASS<strong id="audioBass">0</strong></div>
-      <div class="viz-level">MID<strong id="audioMid">0</strong></div>
-      <div class="viz-level">TREBLE<strong id="audioTreble">0</strong></div>
-    </div>
-    <button class="viz-stop" id="audioStopBtn" type="button">STOP AUDIO</button>
   </div>
 
   <!-- 4. 미연결 시 표시되는 하단 기본 컨트롤 바 (연결 시 자동 숨김) -->
@@ -866,27 +804,17 @@ function drawVisualizer(){
     const barHeight=Math.max(audioRunning?2:1,vizLevels[i]*maxHeight);
     const x=i*(barWidth+gap), y=bottom-barHeight;
     const gradient=vizCtx.createLinearGradient(0,y,0,bottom);
-    gradient.addColorStop(0,'#72e4ff');
-    gradient.addColorStop(.48,'#299dff');
-    gradient.addColorStop(1,'#164fbd');
+    gradient.addColorStop(0,'#8affc9');
+    gradient.addColorStop(.48,'#20d995');
+    gradient.addColorStop(1,'#08784f');
     vizCtx.fillStyle=gradient;
-    vizCtx.shadowColor='rgba(42,159,255,.48)';
+    vizCtx.shadowColor='rgba(0,230,145,.42)';
     vizCtx.shadowBlur=document.body.classList.contains('viz-fullscreen')?12:5;
     vizCtx.beginPath();
     vizCtx.roundRect(x,y,Math.max(1,barWidth),barHeight,Math.min(4,barWidth/2));
     vizCtx.fill();
   }
   vizCtx.shadowBlur=0;
-  if(audioRunning && audioAnalyser && audioData){
-    const avg=(from,to)=>{
-      let sum=0;
-      for(let i=from;i<to;i++)sum+=audioData[i]||0;
-      return Math.round(sum/(to-from));
-    };
-    $('audioBass').textContent=avg(0,5);
-    $('audioMid').textContent=avg(5,20);
-    $('audioTreble').textContent=avg(20,55);
-  }
   audioFrame=requestAnimationFrame(drawVisualizer);
 }
 drawVisualizer();
@@ -906,9 +834,6 @@ async function startAudioVisualizer(){
     audioData=new Uint8Array(audioAnalyser.frequencyBinCount);
     audioContext.createMediaStreamSource(audioStream).connect(audioAnalyser);
     audioRunning=true;
-    $('audioStatus').textContent='● LISTENING';
-    $('audioStatus').style.color='#55e6ad';
-    $('vizHint').textContent='TAP ANYWHERE TO RETURN TO DASHBOARD';
   }catch(e){
     audioStream.getTracks().forEach(t=>t.stop());
     audioStream=null;
@@ -925,64 +850,18 @@ async function stopAudioVisualizer(){
   if(audioWakeLock){try{await audioWakeLock.release()}catch(e){}audioWakeLock=null;}
   audioStream=null;audioContext=null;audioAnalyser=null;audioData=null;
   vizLevels.fill(0);
-  $('audioStatus').textContent='MIC OFF';
-  $('audioStatus').style.color='#58cfff';
-  $('vizHint').textContent='TOUCH TO START & EXPAND';
-  ['audioBass','audioMid','audioTreble'].forEach(id=>$(id).textContent='0');
 }
 
-async function enterVisualizerFullscreen(){
-  document.body.classList.add('viz-fullscreen');
-  resizeVisualizer();
-  if(vizBox.requestFullscreen){
-    try{await vizBox.requestFullscreen()}catch(e){/* CSS full-screen fallback */}
-  }
-  resizeVisualizer();
-}
-async function exitVisualizerFullscreen(){
-  document.body.classList.remove('viz-fullscreen');
-  if(document.fullscreenElement){
-    try{await document.exitFullscreen()}catch(e){}
-  }
-  resizeVisualizer();
-}
-vizBox.addEventListener('click',async e=>{
-  if(e.target===$('audioStopBtn'))return;
-  if(document.body.classList.contains('viz-fullscreen')){
-    await exitVisualizerFullscreen();
-    return;
-  }
-  // requestFullscreen is invoked directly from the touch gesture before awaiting microphone permission
-  const fullRequest=vizBox.requestFullscreen ? vizBox.requestFullscreen().catch(()=>{}) : Promise.resolve();
-  document.body.classList.add('viz-fullscreen');
-  resizeVisualizer();
+vizBox.addEventListener('click',async()=>{
   try{
-    if(!audioRunning)await startAudioVisualizer();
-    $('vizHint').textContent='TAP ANYWHERE TO RETURN TO DASHBOARD';
+    if(audioRunning) await stopAudioVisualizer();
+    else await startAudioVisualizer();
   }catch(err){
-    document.body.classList.remove('viz-fullscreen');
-    if(document.fullscreenElement){try{await document.exitFullscreen()}catch(e){}}
-    $('audioStatus').textContent='MIC UNAVAILABLE';
-    $('vizHint').textContent='CHECK MICROPHONE PERMISSION';
-    alert('마이크를 시작할 수 없습니다.\n'+err.message);
+    alert('마이크를 시작할 수 없습니다.\\n'+err.message);
   }
-  await fullRequest;
-  resizeVisualizer();
 });
 vizBox.addEventListener('keydown',e=>{
   if(e.key==='Enter'||e.key===' '){e.preventDefault();vizBox.click();}
-});
-$('audioStopBtn').addEventListener('click',async e=>{
-  e.stopPropagation();
-  await stopAudioVisualizer();
-  await exitVisualizerFullscreen();
-});
-document.addEventListener('fullscreenchange',()=>{
-  if(document.fullscreenElement!==vizBox && !document.body.classList.contains('viz-fullscreen'))return;
-  if(!document.fullscreenElement && document.body.classList.contains('viz-fullscreen')){
-    document.body.classList.remove('viz-fullscreen');
-    resizeVisualizer();
-  }
 });
 document.addEventListener('visibilitychange',async()=>{
   if(document.visibilityState==='visible' && audioRunning && 'wakeLock' in navigator){
