@@ -1,0 +1,276 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#080d0c">
+<title>ESSENZA AUDIO</title>
+<style>
+* { box-sizing:border-box; }
+body {
+  margin:0; background:#080d0c; color:#e6f0eb;
+  font-family:Arial,sans-serif; min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.app {
+  width:min(100%,900px); min-height:100dvh;
+  padding:28px 24px; display:flex;
+  flex-direction:column; justify-content:space-between;
+}
+header { display:flex; justify-content:space-between; align-items:center; }
+.brand { letter-spacing:3px; font-size:14px; color:#9aaca5; }
+.status {
+  border:1px solid #254c3d; border-radius:30px;
+  padding:8px 14px; color:#82958c; font-size:12px;
+}
+.status.on { color:#39dda0; }
+.visual {
+  flex:1; min-height:240px; display:flex;
+  align-items:center; justify-content:center;
+  position:relative;
+}
+canvas { width:100%; height:100%; max-height:420px; }
+.info { text-align:center; margin:15px 0 25px; }
+.info h1 { font-size:30px; font-weight:400; margin:0 0 10px; }
+.info p { color:#82958c; font-size:13px; letter-spacing:2px; }
+.levels {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:10px; margin-bottom:25px;
+}
+.level {
+  background:#111b17; border:1px solid #24332c;
+  border-radius:13px; padding:14px 8px; text-align:center;
+}
+.level small { color:#82958c; font-size:11px; letter-spacing:1px; }
+.level strong { display:block; font-size:19px; margin-top:7px; font-weight:400; }
+.controls { display:flex; gap:12px; }
+button {
+  border:1px solid #294337; background:#101a16;
+  color:#dcebe3; border-radius:14px; padding:17px;
+  font-size:15px; cursor:pointer;
+}
+#start {
+  flex:1; background:#38d99b; color:#07130e;
+  border:0; font-weight:600;
+}
+button:disabled { opacity:.45; }
+footer { text-align:center; color:#64776e; font-size:11px; margin-top:20px; }
+@media (orientation:landscape) {
+  .app { max-width:1200px; padding:18px 35px; }
+  .visual { min-height:150px; }
+  .info { margin:5px 0 12px; }
+  .info h1 { font-size:23px; }
+  .levels { margin-bottom:12px; }
+  footer { margin-top:10px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">ESSENZA // AUDIO</div>
+    <div class="status" id="status">● STANDBY</div>
+  </header>
+
+  <section class="visual">
+    <canvas id="spectrum"></canvas>
+  </section>
+
+  <section class="info">
+    <h1 id="mainText">Sound in Motion</h1>
+    <p id="subText">READY FOR MUSIC</p>
+  </section>
+
+  <section class="levels">
+    <div class="level">
+      <small>BASS</small>
+      <strong id="bass">0</strong>
+    </div>
+    <div class="level">
+      <small>MID</small>
+      <strong id="mid">0</strong>
+    </div>
+    <div class="level">
+      <small>TREBLE</small>
+      <strong id="treble">0</strong>
+    </div>
+  </section>
+
+  <section class="controls">
+    <button id="start">▶ START AUDIO</button>
+    <button id="stop" disabled>■</button>
+    <button id="full">⛶</button>
+  </section>
+  <footer>REAL-TIME MICROPHONE AUDIO ANALYSIS</footer>
+</div>
+
+<script>
+const canvas = document.getElementById('spectrum');
+const ctx = canvas.getContext('2d');
+const startBtn = document.getElementById('start');
+const stopBtn = document.getElementById('stop');
+const statusEl = document.getElementById('status');
+
+let audioCtx, analyser, stream, source;
+let data, running = false, raf;
+let wakeLock = null;
+const COUNT = 64;
+let levels = new Array(COUNT).fill(0);
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+function draw() {
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  ctx.clearRect(0,0,w,h);
+
+  const gap = Math.max(2, w / 180);
+  const barWidth = (w - gap*(COUNT-1)) / COUNT;
+  const bottom = h * 0.82;
+  const maxHeight = h * 0.72;
+
+  for(let i=0;i<COUNT;i++) {
+    let target = 0;
+    if(running && analyser) {
+      const index = Math.floor(Math.pow(i/(COUNT-1),1.65) * (data.length-1));
+      target = data[index] / 255;
+    }
+
+    levels[i] = target > levels[i]
+      ? levels[i]*0.25 + target*0.75
+      : levels[i]*0.88 + target*0.12;
+
+    const value = levels[i];
+    const barHeight = Math.max(4, value*maxHeight);
+    const x = i*(barWidth+gap);
+    const y = bottom-barHeight;
+
+    const gradient = ctx.createLinearGradient(0,y,0,bottom);
+    gradient.addColorStop(0,'#52f5b6');
+    gradient.addColorStop(1,'#187d59');
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(x,y,barWidth,barHeight,3);
+    ctx.fill();
+  }
+
+  if(running && analyser) updateLevels();
+  raf = requestAnimationFrame(draw);
+}
+
+function updateLevels() {
+  analyser.getByteFrequencyData(data);
+  const avg = (from,to) => {
+    let sum=0;
+    for(let i=from;i<to;i++) sum+=data[i];
+    return Math.round(sum/(to-from));
+  };
+  document.getElementById('bass').textContent = avg(0,5);
+  document.getElementById('mid').textContent = avg(5,20);
+  document.getElementById('treble').textContent = avg(20,55);
+}
+
+async function keepAwake() {
+  try {
+    if('wakeLock' in navigator)
+      wakeLock = await navigator.wakeLock.request('screen');
+  } catch(e) { console.log('Wake Lock unavailable',e); }
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if(document.visibilityState === 'visible' && running)
+    await keepAwake();
+});
+
+startBtn.onclick = async () => {
+  try {
+    startBtn.disabled = true;
+    if(!navigator.mediaDevices?.getUserMedia)
+      throw new Error('HTTPS 연결이 필요합니다.');
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio:{
+        echoCancellation:false,
+        noiseSuppression:false,
+        autoGainControl:false
+      }
+    });
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    await audioCtx.resume();
+
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 4096;
+    analyser.smoothingTimeConstant = 0.78;
+    data = new Uint8Array(analyser.frequencyBinCount);
+
+    source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    running = true;
+    await keepAwake();
+
+    statusEl.textContent = '● LISTENING';
+    statusEl.classList.add('on');
+    document.getElementById('mainText').textContent = 'Feel the Sound';
+    document.getElementById('subText').textContent = 'MICROPHONE ACTIVE';
+
+    startBtn.textContent = '● RUNNING';
+    stopBtn.disabled = false;
+  } catch(e) {
+    alert('마이크를 시작할 수 없습니다.\n' + e.message);
+    startBtn.disabled = false;
+  }
+};
+
+stopBtn.onclick = async () => {
+  running = false;
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  if(audioCtx) await audioCtx.close();
+  if(wakeLock) { await wakeLock.release(); wakeLock=null; }
+
+  stream = null;
+  audioCtx = null;
+  analyser = null;
+  levels.fill(0);
+
+  statusEl.textContent = '● STANDBY';
+  statusEl.classList.remove('on');
+  document.getElementById('mainText').textContent = 'Sound in Motion';
+  document.getElementById('subText').textContent = 'READY FOR MUSIC';
+
+  ['bass','mid','treble'].forEach(id=>{
+    document.getElementById(id).textContent='0';
+  });
+
+  startBtn.disabled = false;
+  startBtn.textContent = '▶ START AUDIO';
+  stopBtn.disabled = true;
+};
+
+document.getElementById('full').onclick = async () => {
+  try {
+    if(!document.fullscreenElement)
+      await document.documentElement.requestFullscreen();
+    else
+      await document.exitFullscreen();
+  } catch(e) {
+    alert('전체 화면을 지원하지 않는 환경입니다.');
+  }
+};
+
+draw();
+</script>
+</body>
+</html>
