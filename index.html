@@ -624,20 +624,33 @@ body.is-connected .bottom-controls{
     <!-- [메인 클러스터] RPM 아크 + 속도계 -->
     <section class="main-cluster">
       <div class="rpm-arc-box">
-        <svg class="rpm-svg" viewBox="0 18 200 96" aria-label="RPM Arc Gauge">
-          <!-- 눈금 숫자 (0, 2, 4, 6, 8k) -->
-          <text x="18" y="106" font-size="8" fill="#4a5753" font-weight="700">0</text>
-          <text x="36" y="55" font-size="8" fill="#4a5753" font-weight="700">2</text>
-          <text x="96" y="28" font-size="8" fill="#4a5753" font-weight="700">4</text>
-          <text x="156" y="55" font-size="8" fill="#4a5753" font-weight="700">6</text>
-          <text x="175" y="106" font-size="8" fill="#ff3b47" font-weight="700">8k</text>
-
-          <!-- 베이스 트랙 -->
-          <path d="M 28 105 A 72 72 0 0 1 172 105" fill="none" stroke="#1b2421" stroke-width="12" stroke-linecap="round"/>
-          <!-- 레드존 표시 구간 (6.5k ~ 8k) -->
-          <path d="M 28 105 A 72 72 0 0 1 172 105" fill="none" stroke="rgba(255,59,71,0.5)" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="19 100" stroke-dashoffset="-81"/>
-          <!-- 활성 아크 채움선 -->
-          <path id="rpmArc" d="M 28 105 A 72 72 0 0 1 172 105" fill="none" stroke="var(--mint)" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="opacity:0; transition:opacity .15s ease, stroke .2s ease;"/>
+        <svg class="rpm-svg" viewBox="0 18 200 96" aria-label="RPM Gauge">
+          <!-- 숫자와 두꺼운 링을 제거한 미니멀 눈금. 끝부분은 레드존 -->
+          <line x1="41.00" y1="105.00" x2="28.00" y2="105.00" stroke="#52615b" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
+          <line x1="37.54" y1="96.78" x2="28.62" y2="95.60" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="39.15" y1="88.69" x2="30.45" y2="86.37" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="41.80" y1="80.89" x2="33.48" y2="77.45" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="48.90" y1="75.50" x2="37.65" y2="69.00" stroke="#52615b" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
+          <line x1="50.02" y1="66.65" x2="42.88" y2="61.17" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="55.45" y1="60.45" x2="49.09" y2="54.09" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="61.65" y1="55.02" x2="56.17" y2="47.88" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="70.50" y1="53.90" x2="64.00" y2="42.65" stroke="#52615b" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
+          <line x1="75.89" y1="46.80" x2="72.45" y2="38.48" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="83.69" y1="44.15" x2="81.37" y2="35.45" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="91.78" y1="42.54" x2="90.60" y2="33.62" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="100.00" y1="46.00" x2="100.00" y2="33.00" stroke="#52615b" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
+          <line x1="108.22" y1="42.54" x2="109.40" y2="33.62" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="116.31" y1="44.15" x2="118.63" y2="35.45" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="124.11" y1="46.80" x2="127.55" y2="38.48" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="129.50" y1="53.90" x2="136.00" y2="42.65" stroke="#52615b" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
+          <line x1="138.35" y1="55.02" x2="143.83" y2="47.88" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="144.55" y1="60.45" x2="150.91" y2="54.09" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="149.98" y1="66.65" x2="157.12" y2="61.17" stroke="#52615b" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
+          <line x1="151.10" y1="75.50" x2="162.35" y2="69.00" stroke="#ff3b47" stroke-width="1.8" stroke-linecap="round" opacity="1"/>
+          <line x1="158.20" y1="80.89" x2="166.52" y2="77.45" stroke="#ff3b47" stroke-width="1.2" stroke-linecap="round" opacity="1"/>
+          <line x1="160.85" y1="88.69" x2="169.55" y2="86.37" stroke="#ff3b47" stroke-width="1.2" stroke-linecap="round" opacity="1"/>
+          <line x1="162.46" y1="96.78" x2="171.38" y2="95.60" stroke="#ff3b47" stroke-width="1.2" stroke-linecap="round" opacity="1"/>
+          <line x1="159.00" y1="105.00" x2="172.00" y2="105.00" stroke="#ff3b47" stroke-width="1.8" stroke-linecap="round" opacity="1"/>
         </svg>
 
         <!-- [세로 모드] 아크 내부 RPM 수치 -->
@@ -871,28 +884,10 @@ document.addEventListener('visibilitychange',async()=>{
 
 // --- 2. RPM 아크 게이지 업데이트 ---
 function updateRpm(rpm, maxRpm = 8000) {
-  const arc = $('rpmArc');
-  if (!arc) return;
   const rVal = Math.max(0, Math.min(maxRpm, Math.round(rpm || 0)));
-  
   $('rpmVal').textContent = rVal.toLocaleString('en-US');
   $('rpmValL').textContent = rVal.toLocaleString('en-US');
-
-  if (rVal <= 10) {
-    arc.style.opacity = '0';
-    arc.setAttribute('stroke-dasharray', '0 100');
-    return;
-  }
-  arc.style.opacity = '1';
-  const ratio = rVal / maxRpm;
-  arc.setAttribute('stroke-dasharray', `${(ratio * 100).toFixed(1)} 100`);
-  
-  if (rVal >= 6500) {
-    arc.setAttribute('stroke', 'var(--red)');
-  } else {
-    arc.setAttribute('stroke', 'var(--mint)');
-  }
-
+  // RPM은 중앙 숫자로 표시하고, 반원은 고정 눈금만 유지합니다.
   currentIntensity = Math.min(1.0, 0.3 + (rVal / maxRpm) * 0.7);
 }
 
