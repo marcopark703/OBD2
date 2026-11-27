@@ -36,61 +36,87 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 <script>
 (()=>{
 const canvas=document.getElementById('field'),ctx=canvas.getContext('2d',{alpha:false});
-let w=0,h=0,dpr=1,particles=[],last=0,phase=0,rpm=2150,speed=82;
-const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);const n=Math.max(260,Math.min(760,Math.round(w*h/1900)));particles=Array.from({length:n},(_,i)=>({u:Math.random(),v:Math.random(),z:.25+Math.random()*.95,seed:Math.random()*Math.PI*2,size:.35+Math.random()*1.35}));}
-function clock(){const d=new Date();document.getElementById('time').textContent=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});document.getElementById('date').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase().replace(',',' ·');}
+const $=id=>document.getElementById(id);
+let w=0,h=0,dpr=1,particles=[],last=0,phase=0;
+let telemetry=null,packetAt=0;
+const channel=('BroadcastChannel' in window)?new BroadcastChannel('essenza-obd-telemetry'):null;
+function applyPacket(p){
+ if(!p||p.source!=='essenza-obd')return;
+ telemetry=p;packetAt=Date.now();
+}
+function readStored(){
+ try{const p=JSON.parse(localStorage.getItem('essenza-obd-telemetry')||'null');if(p)applyPacket(p);}catch(e){}
+}
+if(channel)channel.onmessage=e=>applyPacket(e.data);
+window.addEventListener('storage',e=>{if(e.key==='essenza-obd-telemetry')readStored();});
+readStored();
+function live(){
+ return telemetry&&telemetry.connected&&Date.now()-packetAt<6000;
+}
+function resize(){
+ dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;
+ canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ const n=Math.max(260,Math.min(760,Math.round(w*h/1900)));
+ particles=Array.from({length:n},()=>({u:Math.random(),v:Math.random(),z:.25+Math.random()*.95,seed:Math.random()*Math.PI*2,size:.35+Math.random()*1.35}));
+}
+function clock(){
+ const d=new Date();
+ $('time').textContent=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
+ $('date').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase().replace(',',' ·');
+}
 function draw(t){
  const dt=Math.min((t-last)/1000||0,.04);last=t;
- // Demonstration values only: a gentle simulated RPM response.
- phase+=dt*(.34+rpm/4200);
- rpm=2150+Math.sin(t*.00042)*390+Math.sin(t*.00017)*170;
- speed=82+Math.round(Math.sin(t*.00013)*2);
- document.getElementById('rpm').textContent=Math.round(rpm).toLocaleString('en-US');
- document.getElementById('speed').textContent=speed;
- const heat=Math.max(0,Math.min(1,(rpm-1700)/2200));
- const g=150+Math.round(35*heat),b=90-Math.round(52*heat);
+ const active=live();
+ const rpm=active&&Number.isFinite(Number(telemetry.rpm))?Number(telemetry.rpm):0;
+ const speed=active&&Number.isFinite(Number(telemetry.speed))?Number(telemetry.speed):null;
+ const load=active&&Number.isFinite(Number(telemetry.load))?Number(telemetry.load):0;
+ const coolant=active&&Number.isFinite(Number(telemetry.coolant))?Number(telemetry.coolant):null;
+ const oil=active&&Number.isFinite(Number(telemetry.oilTemp))?Number(telemetry.oilTemp):null;
+ const rpmFactor=Math.max(0,Math.min(1,rpm/4200));
+ const loadFactor=Math.max(0,Math.min(1,load/100));
+ const thermal=coolant===null?oil:coolant;
+ const heat=thermal===null?0:Math.max(0,Math.min(1,(thermal-55)/55));
+ phase+=dt*(.25+rpmFactor*1.15+loadFactor*.55);
+ $('rpm').textContent=active?Math.round(rpm).toLocaleString('en-US'):'--';
+ $('speed').textContent=speed===null?'--':Math.round(speed).toString();
+ const red=Math.round(35+heat*185),green=Math.round(155-heat*35),blue=Math.round(112-heat*95);
  ctx.fillStyle='rgba(2,8,7,.24)';ctx.fillRect(0,0,w,h);
- const cx=w*.5,cy=h*.52,amp=h*(.075+heat*.085),flow=.14+heat*.7;
- // A broad, slowly undulating energy ribbon.
+ const cx=w*.5,cy=h*.52,amp=h*(.075+rpmFactor*.085+loadFactor*.045),flow=.12+rpmFactor*.55+loadFactor*.32;
  for(let band=0;band<5;band++){
   ctx.beginPath();
   for(let x=0;x<=w+8;x+=8){
-   const nx=x/w, envelope=Math.sin(Math.PI*nx);
+   const nx=x/w,envelope=Math.sin(Math.PI*nx);
    const y=cy+(band-2)*amp*.22+Math.sin(nx*8.5+phase*(.7+band*.08)+band)*amp*envelope*.58+Math.sin(nx*19-phase*.34+band*1.7)*amp*.12;
    if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
   }
-  ctx.strokeStyle='rgba(54,'+(g+band*5)+','+(b+band*5)+','+(.055+band*.012+heat*.025)+')';
-  ctx.lineWidth=1+band*.65;ctx.shadowBlur=18+heat*16;ctx.shadowColor='rgba(54,220,145,.18)';ctx.stroke();
+  ctx.strokeStyle='rgba('+red+','+(green+band*5)+','+(blue+band*5)+','+(.055+band*.012+rpmFactor*.025+loadFactor*.02)+')';
+  ctx.lineWidth=1+band*.65;ctx.shadowBlur=18+rpmFactor*16+loadFactor*10;ctx.shadowColor='rgba('+red+','+green+','+blue+',.22)';ctx.stroke();
  }
  ctx.shadowBlur=0;
- // Depth particles drift along the curved field, with speed tied to RPM.
  for(const p of particles){
   p.u+=dt*flow*(.012+p.z*.035);
   if(p.u>1.08){p.u=-.08;p.v=Math.random();}
-  const x=p.u*w, nx=p.u, env=Math.sin(Math.PI*nx);
+  const nx=p.u,x=nx*w,env=Math.sin(Math.PI*nx);
   const center=cy+Math.sin(nx*8.5+phase)*amp*env*.58;
-  const spread=(p.v-.5)*h*(.18+p.z*.42);
-  const y=center+spread+Math.sin(nx*19-phase*.34+p.seed)*amp*.12;
-  const twinkle=.55+.45*Math.sin(phase*1.6+p.seed);
-  const r=p.size*p.z*(.7+heat*.18);
+  const y=center+(p.v-.5)*h*(.18+p.z*.42)+Math.sin(nx*19-phase*.34+p.seed)*amp*.12;
+  const twinkle=.55+.45*Math.sin(phase*1.6+p.seed),r=p.size*p.z*(.7+rpmFactor*.18+loadFactor*.1);
   ctx.beginPath();ctx.arc(x,y,Math.max(.35,r),0,Math.PI*2);
-  ctx.fillStyle='rgba(105,'+(g+Math.round(twinkle*45))+','+(b+Math.round(twinkle*38))+','+(.18+p.z*.62)*twinkle+')';
+  ctx.fillStyle='rgba(105,'+(green+Math.round(twinkle*45))+','+(blue+Math.round(twinkle*38))+','+(.18+p.z*.62)*twinkle+')';
   ctx.shadowBlur=4+p.z*13;ctx.shadowColor='rgba(64,245,165,.7)';ctx.fill();
   if(p.z>.78&&twinkle>.92){ctx.beginPath();ctx.moveTo(x-r*4,y);ctx.lineTo(x+r*4,y);ctx.strokeStyle='rgba(125,255,190,.22)';ctx.lineWidth=.6;ctx.stroke();}
  }
  ctx.shadowBlur=0;
- // Soft ambient glow behind the particle stream.
  const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.62);
- grad.addColorStop(0,'rgba(12,95,59,.11)');grad.addColorStop(.48,'rgba(4,44,30,.07)');grad.addColorStop(1,'rgba(0,0,0,0)');
+ grad.addColorStop(0,'rgba('+red+','+green+','+blue+','+(active?.11:.055)+')');
+ grad.addColorStop(.48,'rgba(4,44,30,.07)');grad.addColorStop(1,'rgba(0,0,0,0)');
  ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
- if(!reduced)requestAnimationFrame(draw);
+ requestAnimationFrame(draw);
 }
-function start(){ctx.fillStyle='#030908';ctx.fillRect(0,0,w,h);requestAnimationFrame(draw);}
-resize();clock();setInterval(clock,1000);addEventListener('resize',()=>{resize();});
-start();
+resize();clock();setInterval(clock,1000);addEventListener('resize',resize);
+ctx.fillStyle='#030908';ctx.fillRect(0,0,w,h);requestAnimationFrame(draw);
 document.addEventListener('pointerup',()=>{if(!document.fullscreenElement&&document.documentElement.requestFullscreen){document.documentElement.requestFullscreen().catch(()=>{});}});
-document.addEventListener('fullscreenchange',()=>{setTimeout(resize,100);});
+document.addEventListener('fullscreenchange',()=>setTimeout(resize,100));
 })();
 </script>
 </body>
