@@ -793,7 +793,19 @@ const vizCanvas = $('vizCanvas');
 const vizCtx = vizCanvas.getContext('2d',{alpha:false});
 let currentIntensity = 0.35;
 let liveRpm = 0, liveSpeed = 0, liveCoolant = null;
+let liveOilTemp = null, liveLoad = null, liveVoltage = null, liveBoost = null;
 let ambientParticles = [], ambientPhase = 0, ambientLast = 0, ambientFrame = 0;
+const telemetryChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('essenza-obd-telemetry') : null;
+function publishTelemetry(){
+  const packet = {
+    source:'essenza-obd', timestamp:Date.now(),
+    connected:!!connected,
+    rpm:liveRpm, speed:liveSpeed, coolant:liveCoolant,
+    oilTemp:liveOilTemp, load:liveLoad, voltage:liveVoltage, boost:liveBoost
+  };
+  try { localStorage.setItem('essenza-obd-telemetry', JSON.stringify(packet)); } catch(e) {}
+  if(telemetryChannel) telemetryChannel.postMessage(packet);
+}
 
 function resizeVisualizer(){
   const rect=vizCanvas.getBoundingClientRect();
@@ -825,15 +837,17 @@ function drawVisualizer(t){
   if(!w||!h){ambientFrame=requestAnimationFrame(drawVisualizer);return;}
   const dt=Math.min((t-ambientLast)/1000||0,.04);ambientLast=t;
   const rpmFactor=Math.max(0,Math.min(1,liveRpm/4200));
-  const heat=liveCoolant==null?0:Math.max(0,Math.min(1,(liveCoolant-55)/55));
-  ambientPhase+=dt*(.34+rpmFactor*1.5);
+  const loadFactor=liveLoad==null?0:Math.max(0,Math.min(1,liveLoad/100));
+  const thermal=liveCoolant==null?liveOilTemp:liveCoolant;
+  const heat=thermal==null?0:Math.max(0,Math.min(1,(thermal-55)/55));
+  ambientPhase+=dt*(.34+rpmFactor*1.15+loadFactor*.55);
   $('ambientSpeed').textContent=Math.round(liveSpeed).toString();
   $('ambientRpm').textContent=Math.round(liveRpm).toLocaleString('en-US');
 
   // Coolant temperature gradually shifts the energy field from cool teal to warm amber.
   const red=Math.round(35+heat*185), green=Math.round(155-heat*35), blue=Math.round(112-heat*95);
   vizCtx.fillStyle='rgba(2,8,7,.25)';vizCtx.fillRect(0,0,w,h);
-  const cx=w*.5,cy=h*.52,amp=h*(.075+rpmFactor*.11),flow=.12+rpmFactor*.72;
+  const cx=w*.5,cy=h*.52,amp=h*(.075+rpmFactor*.085+loadFactor*.045),flow=.12+rpmFactor*.55+loadFactor*.32;
   for(let band=0;band<5;band++){
     vizCtx.beginPath();
     for(let x=0;x<=w+8;x+=Math.max(4,w/130)){
@@ -893,6 +907,7 @@ vizBox.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.prevent
 function updateRpm(rpm, maxRpm = 8000) {
   const rVal = Math.max(0, Math.min(maxRpm, Math.round(rpm || 0)));
   liveRpm = rVal;
+  publishTelemetry();
   $('rpmVal').textContent = rVal.toLocaleString('en-US');
   $('rpmValL').textContent = rVal.toLocaleString('en-US');
   // RPM은 중앙 숫자로 표시하고, 반원은 고정 눈금만 유지합니다.
@@ -903,12 +918,15 @@ function updateRpm(rpm, maxRpm = 8000) {
 function updateSpeed(spd) {
   const sVal = spd === null ? 0 : Math.round(spd);
   liveSpeed = sVal;
+  publishTelemetry();
   $('speedVal').textContent = sVal;
   $('speedValL').textContent = sVal;
 }
 
 // --- 4. 부스트 업데이트 ---
 function updateBoost(boost) {
+  liveBoost = boost;
+  publishTelemetry();
   const bVal = boost === null ? 0 : Math.max(0, boost);
   const text = bVal.toFixed(2);
   $('boostVal').textContent = text;
@@ -920,6 +938,7 @@ function updateBoost(boost) {
 // --- 5. 보조 지표 업데이트 (단일 DOM 업데이트) ---
 function updateCoolant(temp) {
   liveCoolant = (temp === null || temp === undefined) ? null : temp;
+  publishTelemetry();
   const text = (temp === null || temp === undefined) ? '--' : Math.round(temp);
   $('valCoolant').textContent = text;
 
@@ -934,6 +953,8 @@ function updateCoolant(temp) {
 }
 
 function updateOilTemp(temp) {
+  liveOilTemp = (temp === null || temp === undefined) ? null : temp;
+  publishTelemetry();
   const text = (temp === null || temp === undefined) ? '--' : Math.round(temp);
   $('valOil').textContent = text;
 
@@ -947,6 +968,8 @@ function updateOilTemp(temp) {
 }
 
 function updateBattery(volts) {
+  liveVoltage = (volts === null || volts === undefined) ? null : volts;
+  publishTelemetry();
   const text = (volts === null || volts === undefined) ? '--.-' : volts.toFixed(1);
   $('valVoltage').textContent = text;
 
@@ -961,6 +984,8 @@ function updateBattery(volts) {
 }
 
 function updateEngineLoad(load) {
+  liveLoad = (load === null || load === undefined) ? null : load;
+  publishTelemetry();
   const text = (load === null || load === undefined) ? '--' : Math.round(load);
   $('valLoad').textContent = text;
 
@@ -1017,6 +1042,7 @@ function setUIConnectedState(mode) {
     disBtn.disabled = true;
     connBtn.disabled = false;
   }
+  publishTelemetry();
 }
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
