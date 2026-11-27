@@ -1191,16 +1191,27 @@ async function startBLE() {
     alert("이 브라우저는 Web Bluetooth를 지원하지 않습니다. Chrome/Android 환경에서 이용하세요.");
     return;
   }
-  // Prevent repeated taps from launching overlapping fullscreen requests
-  // and multiple Bluetooth choosers while the first attempt is in progress.
+  // Android Chrome treats fullscreen and the Bluetooth chooser as
+  // separate user-activation actions. Run them in two deliberate taps:
+  // tap 1 enters fullscreen; tap 2 opens the Bluetooth chooser.
   if (bleConnectionStarting || connected) return;
+  if (autoRoutine && !document.fullscreenElement) {
+    bleConnectionStarting = true;
+    $('connectBtn').disabled = true;
+    requestFullscreenSafe().finally(() => {
+      bleConnectionStarting = false;
+      $('connectBtn').disabled = false;
+      $('statusText').textContent = 'DISCONNECTED';
+    });
+    return;
+  }
+
   bleConnectionStarting = true;
   $('connectBtn').disabled = true;
   $('statusText').textContent = 'SEARCHING...';
   try {
-    // Start both permission-gated actions synchronously inside the CONNECT
-    // button gesture. Do not await Wake Lock or any other promise first.
-    if (autoRoutine) requestFullscreenSafe();
+    // Do not request fullscreen again here. The chooser gets the full
+    // user gesture, and canceling it must not exit fullscreen.
     const deviceRequest = navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
       optionalServices
@@ -1236,7 +1247,8 @@ async function startBLE() {
     setUIConnectedState('disconnected');
     if (device?.gatt?.connected) device.gatt.disconnect();
     disableWakeLock();
-    exitFullscreenSafe();
+    // Keep fullscreen active after chooser cancellation or connection error.
+    // The user can retry without another fullscreen transition.
   }
 }
 
