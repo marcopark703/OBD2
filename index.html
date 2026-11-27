@@ -1183,12 +1183,19 @@ async function poll() {
   polling = false;
 }
 
+let bleConnectionStarting = false;
+
 async function startBLE() {
   if (demoActive) stopDemo();
   if (!navigator.bluetooth) {
     alert("이 브라우저는 Web Bluetooth를 지원하지 않습니다. Chrome/Android 환경에서 이용하세요.");
     return;
   }
+  // Prevent repeated taps from launching overlapping fullscreen requests
+  // and multiple Bluetooth choosers while the first attempt is in progress.
+  if (bleConnectionStarting || connected) return;
+  bleConnectionStarting = true;
+  $('connectBtn').disabled = true;
   $('statusText').textContent = 'SEARCHING...';
   try {
     // Start both permission-gated actions synchronously inside the CONNECT
@@ -1220,9 +1227,11 @@ async function startBLE() {
       await delay(100);
     }
     setUIConnectedState('connected');
+    bleConnectionStarting = false;
 
     poll();
   } catch (err) {
+    bleConnectionStarting = false;
     log("BLE Err: " + err.message);
     setUIConnectedState('disconnected');
     if (device?.gatt?.connected) device.gatt.disconnect();
