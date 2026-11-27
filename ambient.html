@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#030908">
+<title>ESSENZA AMBIENT</title>
+<style>
+:root{color-scheme:dark;--ink:rgba(244,255,249,.96)}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030908;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{position:fixed;inset:0;color:var(--ink);-webkit-tap-highlight-color:transparent;user-select:none}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,8,7,.32),transparent 28%,transparent 65%,rgba(0,7,6,.38))}
+.ui{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 5.5vh) 7vw calc(env(safe-area-inset-bottom) + 5vh);pointer-events:none}
+.clock{text-align:center;text-shadow:0 2px 24px rgba(0,0,0,.5)}
+.time{font-size:clamp(58px,12vw,104px);font-weight:250;letter-spacing:-.075em;line-height:.95;font-variant-numeric:tabular-nums}
+.date{margin-top:13px;font-size:11px;font-weight:500;letter-spacing:.22em;color:rgba(220,245,232,.72)}
+.metrics{display:flex;align-items:flex-end;justify-content:space-between;text-shadow:0 2px 22px rgba(0,0,0,.65)}
+.metric{font-variant-numeric:tabular-nums;font-weight:250;letter-spacing:-.065em;line-height:1;white-space:nowrap}
+.metric.left{font-size:clamp(44px,9vw,76px)}
+.metric.right{font-size:clamp(38px,7.8vw,66px);text-align:right}
+.unit{font-size:.35em;letter-spacing:-.01em;font-weight:350;margin-left:.12em;color:rgba(222,245,233,.82)}
+@media (orientation:landscape){.ui{padding:5vh 6vw}.time{font-size:clamp(48px,9vw,78px)}.date{margin-top:8px}.metric.left{font-size:clamp(38px,7vw,62px)}.metric.right{font-size:clamp(34px,6.2vw,56px)}}
+</style>
+</head>
+<body>
+<canvas id="field"></canvas><div class="shade"></div>
+<main class="ui">
+  <header class="clock"><div class="time" id="time">17:08</div><div class="date" id="date">FRIDAY · NOVEMBER 27</div></header>
+  <footer class="metrics">
+    <div class="metric left"><span id="speed">82</span><span class="unit">km</span></div>
+    <div class="metric right"><span id="rpm">2,150</span><span class="unit">rpm</span></div>
+  </footer>
+</main>
+<script>
+(()=>{
+const canvas=document.getElementById('field'),ctx=canvas.getContext('2d',{alpha:false});
+let w=0,h=0,dpr=1,particles=[],last=0,phase=0,rpm=2150,speed=82;
+const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);const n=Math.max(260,Math.min(760,Math.round(w*h/1900)));particles=Array.from({length:n},(_,i)=>({u:Math.random(),v:Math.random(),z:.25+Math.random()*.95,seed:Math.random()*Math.PI*2,size:.35+Math.random()*1.35}));}
+function clock(){const d=new Date();document.getElementById('time').textContent=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});document.getElementById('date').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase().replace(',',' ·');}
+function draw(t){
+ const dt=Math.min((t-last)/1000||0,.04);last=t;
+ // Demonstration values only: a gentle simulated RPM response.
+ phase+=dt*(.34+rpm/4200);
+ rpm=2150+Math.sin(t*.00042)*390+Math.sin(t*.00017)*170;
+ speed=82+Math.round(Math.sin(t*.00013)*2);
+ document.getElementById('rpm').textContent=Math.round(rpm).toLocaleString('en-US');
+ document.getElementById('speed').textContent=speed;
+ const heat=Math.max(0,Math.min(1,(rpm-1700)/2200));
+ const g=150+Math.round(35*heat),b=90-Math.round(52*heat);
+ ctx.fillStyle='rgba(2,8,7,.24)';ctx.fillRect(0,0,w,h);
+ const cx=w*.5,cy=h*.52,amp=h*(.075+heat*.085),flow=.14+heat*.7;
+ // A broad, slowly undulating energy ribbon.
+ for(let band=0;band<5;band++){
+  ctx.beginPath();
+  for(let x=0;x<=w+8;x+=8){
+   const nx=x/w, envelope=Math.sin(Math.PI*nx);
+   const y=cy+(band-2)*amp*.22+Math.sin(nx*8.5+phase*(.7+band*.08)+band)*amp*envelope*.58+Math.sin(nx*19-phase*.34+band*1.7)*amp*.12;
+   if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(54,'+(g+band*5)+','+(b+band*5)+','+(.055+band*.012+heat*.025)+')';
+  ctx.lineWidth=1+band*.65;ctx.shadowBlur=18+heat*16;ctx.shadowColor='rgba(54,220,145,.18)';ctx.stroke();
+ }
+ ctx.shadowBlur=0;
+ // Depth particles drift along the curved field, with speed tied to RPM.
+ for(const p of particles){
+  p.u+=dt*flow*(.012+p.z*.035);
+  if(p.u>1.08){p.u=-.08;p.v=Math.random();}
+  const x=p.u*w, nx=p.u, env=Math.sin(Math.PI*nx);
+  const center=cy+Math.sin(nx*8.5+phase)*amp*env*.58;
+  const spread=(p.v-.5)*h*(.18+p.z*.42);
+  const y=center+spread+Math.sin(nx*19-phase*.34+p.seed)*amp*.12;
+  const twinkle=.55+.45*Math.sin(phase*1.6+p.seed);
+  const r=p.size*p.z*(.7+heat*.18);
+  ctx.beginPath();ctx.arc(x,y,Math.max(.35,r),0,Math.PI*2);
+  ctx.fillStyle='rgba(105,'+(g+Math.round(twinkle*45))+','+(b+Math.round(twinkle*38))+','+(.18+p.z*.62)*twinkle+')';
+  ctx.shadowBlur=4+p.z*13;ctx.shadowColor='rgba(64,245,165,.7)';ctx.fill();
+  if(p.z>.78&&twinkle>.92){ctx.beginPath();ctx.moveTo(x-r*4,y);ctx.lineTo(x+r*4,y);ctx.strokeStyle='rgba(125,255,190,.22)';ctx.lineWidth=.6;ctx.stroke();}
+ }
+ ctx.shadowBlur=0;
+ // Soft ambient glow behind the particle stream.
+ const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.62);
+ grad.addColorStop(0,'rgba(12,95,59,.11)');grad.addColorStop(.48,'rgba(4,44,30,.07)');grad.addColorStop(1,'rgba(0,0,0,0)');
+ ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+ if(!reduced)requestAnimationFrame(draw);
+}
+function start(){ctx.fillStyle='#030908';ctx.fillRect(0,0,w,h);requestAnimationFrame(draw);}
+resize();clock();setInterval(clock,1000);addEventListener('resize',()=>{resize();});
+start();
+document.addEventListener('pointerup',()=>{if(!document.fullscreenElement&&document.documentElement.requestFullscreen){document.documentElement.requestFullscreen().catch(()=>{});}});
+document.addEventListener('fullscreenchange',()=>{setTimeout(resize,100);});
+})();
+</script>
+</body>
+</html>
