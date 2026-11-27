@@ -1189,16 +1189,17 @@ async function startBLE() {
     alert("이 브라우저는 Web Bluetooth를 지원하지 않습니다. Chrome/Android 환경에서 이용하세요.");
     return;
   }
-  if (autoRoutine) {
-    // Fullscreen must be requested directly from the CONNECT button gesture,
-    // before the Bluetooth chooser or any other asynchronous operation.
-    requestFullscreenSafe();
-    await enableWakeLock();
-  }
-
   $('statusText').textContent = 'SEARCHING...';
   try {
-    device = await navigator.bluetooth.requestDevice({acceptAllDevices: true, optionalServices});
+    // Start both permission-gated actions synchronously inside the CONNECT
+    // button gesture. Do not await Wake Lock or any other promise first.
+    if (autoRoutine) requestFullscreenSafe();
+    const deviceRequest = navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices
+    });
+    device = await deviceRequest;
+    if (autoRoutine) await enableWakeLock();
     log("Device: " + (device.name || "Unnamed"));
     device.addEventListener("gattserverdisconnected", () => {
       connected = false;
