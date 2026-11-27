@@ -359,21 +359,28 @@ header{
   50%{border-color:rgba(255,59,71,0.3)}
 }
 
-/* 5. 실시간 오디오 비주얼라이저 */
+/* 5. OBD 데이터 기반 앰비언트 비주얼라이저 */
 .visualizer-box{
-  position:relative;
-  flex:0 0 auto;
-  width:100%;
-  height:clamp(96px, 14.4vh, 136px);
-  border-radius:10px;
-  background:linear-gradient(180deg,#0b1512 0%,#080f0d 100%);
-  border:1px solid #18372c;
-  overflow:hidden;
-  cursor:pointer;
-  touch-action:manipulation;
+  position:relative;flex:0 0 auto;width:100%;
+  height:clamp(96px,14.4vh,136px);border-radius:10px;
+  background:#030908;border:1px solid #18372c;overflow:hidden;
+  cursor:pointer;touch-action:manipulation;
   box-shadow:inset 0 0 22px rgba(0,220,145,.07);
 }
-#vizCanvas{display:block;width:100%;height:100%}
+#vizCanvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+.ambient-overlay{position:absolute;inset:0;display:none;flex-direction:column;
+  justify-content:space-between;padding:calc(env(safe-area-inset-top) + 5.5vh) 7vw calc(env(safe-area-inset-bottom) + 5vh);
+  color:rgba(244,255,249,.96);pointer-events:none;text-shadow:0 2px 24px rgba(0,0,0,.55)}
+.ambient-clock{text-align:center}
+.ambient-time{font-size:clamp(58px,12vw,104px);font-weight:250;letter-spacing:-.075em;line-height:.95;font-variant-numeric:tabular-nums}
+.ambient-date{margin-top:13px;font-size:11px;font-weight:500;letter-spacing:.22em;color:rgba(220,245,232,.72)}
+.ambient-metrics{display:flex;align-items:flex-end;justify-content:space-between;font-variant-numeric:tabular-nums}
+.ambient-metric{font-size:clamp(44px,9vw,76px);font-weight:250;letter-spacing:-.065em;line-height:1;white-space:nowrap}
+.ambient-metric.right{font-size:clamp(38px,7.8vw,66px);text-align:right}
+.ambient-unit{font-size:.35em;letter-spacing:-.01em;font-weight:350;margin-left:.12em;color:rgba(222,245,233,.82)}
+body.ambient-fullscreen .visualizer-box{position:fixed;inset:0;z-index:10000;width:100vw;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none}
+body.ambient-fullscreen .ambient-overlay{display:flex}
+@media (orientation:landscape){.ambient-overlay{padding:5vh 6vw}.ambient-time{font-size:clamp(48px,9vw,78px)}.ambient-date{margin-top:8px}.ambient-metric{font-size:clamp(38px,7vw,62px)}.ambient-metric.right{font-size:clamp(34px,6.2vw,56px)}}
 /* 6. 하단 컨트롤 바 (연결 시 자동 숨김) */
 .bottom-controls{
   flex:0 0 auto;
@@ -728,9 +735,16 @@ body.is-connected .bottom-controls{
 
   </div>
 
-  <!-- 3. 오디오 비주얼라이저 데코 바 -->
-  <div class="visualizer-box" id="visualizerBox" role="button" tabindex="0" aria-label="오디오 비주얼라이저 마이크 시작 또는 정지">
+  <!-- 3. OBD 데이터 기반 앰비언트 비주얼라이저 -->
+  <div class="visualizer-box" id="visualizerBox" role="button" tabindex="0" aria-label="앰비언트 비주얼라이저 전체화면 전환">
     <canvas id="vizCanvas"></canvas>
+    <div class="ambient-overlay">
+      <header class="ambient-clock"><div class="ambient-time" id="ambientTime">--:--</div><div class="ambient-date" id="ambientDate">---</div></header>
+      <footer class="ambient-metrics">
+        <div class="ambient-metric"><span id="ambientSpeed">0</span><span class="ambient-unit">km</span></div>
+        <div class="ambient-metric right"><span id="ambientRpm">0</span><span class="ambient-unit">rpm</span></div>
+      </footer>
+    </div>
   </div>
 
   <!-- 4. 미연결 시 표시되는 하단 기본 컨트롤 바 (연결 시 자동 숨김) -->
@@ -771,120 +785,102 @@ body.is-connected .bottom-controls{
 (() => {
 const $ = id => document.getElementById(id);
 
-// --- 1. 실시간 오디오 비주얼라이저 (기존 audio.html 분석 엔진 재사용) ---
+// --- 1. OBD 데이터 기반 앰비언트 비주얼라이저 ---
 const vizBox = $('visualizerBox');
 const vizCanvas = $('vizCanvas');
-const vizCtx = vizCanvas.getContext('2d');
-const VIZ_COUNT = 64;
+const vizCtx = vizCanvas.getContext('2d',{alpha:false});
 let currentIntensity = 0.35;
-let audioContext = null, audioAnalyser = null, audioStream = null;
-let audioData = null, audioRunning = false, audioFrame = 0;
-let audioWakeLock = null;
-const vizLevels = new Array(VIZ_COUNT).fill(0);
+let liveRpm = 0, liveSpeed = 0, liveCoolant = null;
+let ambientParticles = [], ambientPhase = 0, ambientLast = 0, ambientFrame = 0;
 
 function resizeVisualizer(){
-  const rect = vizCanvas.getBoundingClientRect();
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  vizCanvas.width = Math.max(1, Math.round(rect.width*dpr));
-  vizCanvas.height = Math.max(1, Math.round(rect.height*dpr));
+  const rect=vizCanvas.getBoundingClientRect();
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  vizCanvas.width=Math.max(1,Math.round(rect.width*dpr));
+  vizCanvas.height=Math.max(1,Math.round(rect.height*dpr));
   vizCtx.setTransform(dpr,0,0,dpr,0,0);
+  const w=rect.width,h=rect.height;
+  const n=Math.max(110,Math.min(520,Math.round(w*h/1150)));
+  ambientParticles=Array.from({length:n},()=>({u:Math.random(),v:Math.random(),z:.25+Math.random()*.95,seed:Math.random()*Math.PI*2,size:.35+Math.random()*1.35}));
 }
 window.addEventListener('resize',resizeVisualizer);
-document.addEventListener('fullscreenchange',resizeVisualizer);
+document.addEventListener('fullscreenchange',()=>{
+  document.body.classList.toggle('ambient-fullscreen',!!document.fullscreenElement&&document.fullscreenElement.contains(vizBox));
+  setTimeout(resizeVisualizer,100);
+});
 window.addEventListener('orientationchange',()=>setTimeout(resizeVisualizer,180));
 resizeVisualizer();
 
-function drawVisualizer(){
-  const w = vizCanvas.clientWidth, h = vizCanvas.clientHeight;
-  if(!w || !h){audioFrame=requestAnimationFrame(drawVisualizer);return;}
-  vizCtx.clearRect(0,0,w,h);
-  if(audioRunning && audioAnalyser && audioData){
-    audioAnalyser.getByteFrequencyData(audioData);
-  }
-  const gap = Math.max(2,w/(VIZ_COUNT*5));
-  const barWidth = (w-gap*(VIZ_COUNT-1))/VIZ_COUNT;
-  const bottom = h*(document.body.classList.contains('viz-fullscreen') ? .76 : .88);
-  const maxHeight = h*(document.body.classList.contains('viz-fullscreen') ? .58 : .72);
-  for(let i=0;i<VIZ_COUNT;i++){
-    let target=0;
-    if(audioRunning && audioData){
-      const index=Math.floor(Math.pow(i/(VIZ_COUNT-1),1.65)*(audioData.length-1));
-      target=audioData[index]/255;
-    }
-    vizLevels[i]=target>vizLevels[i]
-      ? vizLevels[i]*.25+target*.75
-      : vizLevels[i]*.88+target*.12;
-    const barHeight=Math.max(audioRunning?2:1,vizLevels[i]*maxHeight);
-    const x=i*(barWidth+gap), y=bottom-barHeight;
-    const gradient=vizCtx.createLinearGradient(0,y,0,bottom);
-    gradient.addColorStop(0,'#8affc9');
-    gradient.addColorStop(.48,'#20d995');
-    gradient.addColorStop(1,'#08784f');
-    vizCtx.fillStyle=gradient;
-    vizCtx.shadowColor='rgba(0,230,145,.42)';
-    vizCtx.shadowBlur=document.body.classList.contains('viz-fullscreen')?12:5;
+function updateAmbientClock(){
+  const d=new Date();
+  $('ambientTime').textContent=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
+  $('ambientDate').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase().replace(',',' ·');
+}
+updateAmbientClock();setInterval(updateAmbientClock,1000);
+
+function drawVisualizer(t){
+  const w=vizCanvas.clientWidth,h=vizCanvas.clientHeight;
+  if(!w||!h){ambientFrame=requestAnimationFrame(drawVisualizer);return;}
+  const dt=Math.min((t-ambientLast)/1000||0,.04);ambientLast=t;
+  const rpmFactor=Math.max(0,Math.min(1,liveRpm/4200));
+  const heat=liveCoolant==null?0:Math.max(0,Math.min(1,(liveCoolant-55)/55));
+  ambientPhase+=dt*(.34+rpmFactor*1.5);
+  $('ambientSpeed').textContent=Math.round(liveSpeed).toString();
+  $('ambientRpm').textContent=Math.round(liveRpm).toLocaleString('en-US');
+
+  // Coolant temperature gradually shifts the energy field from cool teal to warm amber.
+  const red=Math.round(35+heat*185), green=Math.round(155-heat*35), blue=Math.round(112-heat*95);
+  vizCtx.fillStyle='rgba(2,8,7,.25)';vizCtx.fillRect(0,0,w,h);
+  const cx=w*.5,cy=h*.52,amp=h*(.075+rpmFactor*.11),flow=.12+rpmFactor*.72;
+  for(let band=0;band<5;band++){
     vizCtx.beginPath();
-    vizCtx.roundRect(x,y,Math.max(1,barWidth),barHeight,Math.min(4,barWidth/2));
-    vizCtx.fill();
+    for(let x=0;x<=w+8;x+=Math.max(4,w/130)){
+      const nx=x/w,env=Math.sin(Math.PI*nx);
+      const y=cy+(band-2)*amp*.22+Math.sin(nx*8.5+ambientPhase*(.7+band*.08)+band)*amp*env*.58+Math.sin(nx*19-ambientPhase*.34+band*1.7)*amp*.12;
+      if(x===0)vizCtx.moveTo(x,y);else vizCtx.lineTo(x,y);
+    }
+    vizCtx.strokeStyle='rgba('+red+','+green+','+blue+','+(.055+band*.012+rpmFactor*.025)+')';
+    vizCtx.lineWidth=1+band*.65;vizCtx.shadowBlur=12+rpmFactor*20;
+    vizCtx.shadowColor='rgba('+red+','+green+','+blue+',.28)';vizCtx.stroke();
   }
   vizCtx.shadowBlur=0;
-  audioFrame=requestAnimationFrame(drawVisualizer);
+  for(const p of ambientParticles){
+    p.u+=dt*flow*(.012+p.z*.035);
+    if(p.u>1.08){p.u=-.08;p.v=Math.random();}
+    const nx=p.u,x=nx*w,env=Math.sin(Math.PI*nx);
+    const center=cy+Math.sin(nx*8.5+ambientPhase)*amp*env*.58;
+    const y=center+(p.v-.5)*h*(.18+p.z*.42)+Math.sin(nx*19-ambientPhase*.34+p.seed)*amp*.12;
+    const twinkle=.55+.45*Math.sin(ambientPhase*1.6+p.seed),r=p.size*p.z*(.7+rpmFactor*.18);
+    vizCtx.beginPath();vizCtx.arc(x,y,Math.max(.35,r),0,Math.PI*2);
+    vizCtx.fillStyle='rgba('+red+','+(green+Math.round(twinkle*45))+','+(blue+Math.round(twinkle*38))+','+(.18+p.z*.62)*twinkle+')';
+    vizCtx.shadowBlur=3+p.z*12;vizCtx.shadowColor='rgba('+red+','+green+','+blue+',.7)';vizCtx.fill();
+    if(p.z>.78&&twinkle>.92){vizCtx.beginPath();vizCtx.moveTo(x-r*4,y);vizCtx.lineTo(x+r*4,y);vizCtx.strokeStyle='rgba(190,255,220,.22)';vizCtx.lineWidth=.6;vizCtx.stroke();}
+  }
+  vizCtx.shadowBlur=0;
+  const glow=vizCtx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.62);
+  glow.addColorStop(0,'rgba('+red+','+green+','+blue+',.12)');glow.addColorStop(.48,'rgba(4,44,30,.07)');glow.addColorStop(1,'rgba(0,0,0,0)');
+  vizCtx.fillStyle=glow;vizCtx.fillRect(0,0,w,h);
+  ambientFrame=requestAnimationFrame(drawVisualizer);
 }
-drawVisualizer();
+vizCtx.fillStyle='#030908';vizCtx.fillRect(0,0,vizCanvas.width,vizCanvas.height);
+ambientFrame=requestAnimationFrame(drawVisualizer);
 
-async function startAudioVisualizer(){
-  if(audioRunning)return;
-  if(!navigator.mediaDevices?.getUserMedia)throw new Error('마이크 사용에는 HTTPS 연결이 필요합니다.');
-  audioStream=await navigator.mediaDevices.getUserMedia({
-    audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}
-  });
+async function toggleAmbientFullscreen(){
   try{
-    audioContext=new (window.AudioContext||window.webkitAudioContext)();
-    await audioContext.resume();
-    audioAnalyser=audioContext.createAnalyser();
-    audioAnalyser.fftSize=4096;
-    audioAnalyser.smoothingTimeConstant=.78;
-    audioData=new Uint8Array(audioAnalyser.frequencyBinCount);
-    audioContext.createMediaStreamSource(audioStream).connect(audioAnalyser);
-    audioRunning=true;
-  }catch(e){
-    audioStream.getTracks().forEach(t=>t.stop());
-    audioStream=null;
-    if(audioContext)await audioContext.close();
-    audioContext=null;audioAnalyser=null;audioData=null;
-    throw e;
-  }
+    if(document.fullscreenElement){
+      if(document.fullscreenElement===vizBox)await document.exitFullscreen();
+    }else if(vizBox.requestFullscreen){
+      await vizBox.requestFullscreen();
+    }
+  }catch(e){log('Ambient fullscreen: '+e.message);}
 }
-
-async function stopAudioVisualizer(){
-  audioRunning=false;
-  if(audioStream)audioStream.getTracks().forEach(t=>t.stop());
-  if(audioContext){try{await audioContext.close()}catch(e){}}
-  if(audioWakeLock){try{await audioWakeLock.release()}catch(e){}audioWakeLock=null;}
-  audioStream=null;audioContext=null;audioAnalyser=null;audioData=null;
-  vizLevels.fill(0);
-}
-
-vizBox.addEventListener('click',async()=>{
-  try{
-    if(audioRunning) await stopAudioVisualizer();
-    else await startAudioVisualizer();
-  }catch(err){
-    alert('마이크를 시작할 수 없습니다.\\n'+err.message);
-  }
-});
-vizBox.addEventListener('keydown',e=>{
-  if(e.key==='Enter'||e.key===' '){e.preventDefault();vizBox.click();}
-});
-document.addEventListener('visibilitychange',async()=>{
-  if(document.visibilityState==='visible' && audioRunning && 'wakeLock' in navigator){
-    try{audioWakeLock=await navigator.wakeLock.request('screen')}catch(e){}
-  }
-});
+vizBox.addEventListener('click',toggleAmbientFullscreen);
+vizBox.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleAmbientFullscreen();}});
 
 // --- 2. RPM 아크 게이지 업데이트 ---
 function updateRpm(rpm, maxRpm = 8000) {
   const rVal = Math.max(0, Math.min(maxRpm, Math.round(rpm || 0)));
+  liveRpm = rVal;
   $('rpmVal').textContent = rVal.toLocaleString('en-US');
   $('rpmValL').textContent = rVal.toLocaleString('en-US');
   // RPM은 중앙 숫자로 표시하고, 반원은 고정 눈금만 유지합니다.
@@ -894,6 +890,7 @@ function updateRpm(rpm, maxRpm = 8000) {
 // --- 3. 속도 업데이트 ---
 function updateSpeed(spd) {
   const sVal = spd === null ? 0 : Math.round(spd);
+  liveSpeed = sVal;
   $('speedVal').textContent = sVal;
   $('speedValL').textContent = sVal;
 }
@@ -910,6 +907,7 @@ function updateBoost(boost) {
 
 // --- 5. 보조 지표 업데이트 (단일 DOM 업데이트) ---
 function updateCoolant(temp) {
+  liveCoolant = (temp === null || temp === undefined) ? null : temp;
   const text = (temp === null || temp === undefined) ? '--' : Math.round(temp);
   $('valCoolant').textContent = text;
 
