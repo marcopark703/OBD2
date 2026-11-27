@@ -56,6 +56,18 @@ button {
   border:0; font-weight:600;
 }
 button:disabled { opacity:.45; }
+
+.mic-picker {
+  display:flex; align-items:center; gap:10px;
+  margin:0 0 14px; color:#82958c; font-size:12px;
+}
+.mic-picker label { white-space:nowrap; letter-spacing:1px; }
+#micSelect {
+  flex:1; min-width:0; background:#101a16; color:#dcebe3;
+  border:1px solid #294337; border-radius:10px; padding:11px;
+  font-size:13px;
+}
+
 footer { text-align:center; color:#64776e; font-size:11px; margin-top:20px; }
 @media (orientation:landscape) {
   .app { max-width:1200px; padding:18px 35px; }
@@ -98,6 +110,13 @@ footer { text-align:center; color:#64776e; font-size:11px; margin-top:20px; }
     </div>
   </section>
 
+  <div class="mic-picker">
+    <label for="micSelect">MIC INPUT</label>
+    <select id="micSelect" disabled>
+      <option value="">마이크 시작 후 장치를 확인합니다</option>
+    </select>
+  </div>
+
   <section class="controls">
     <button id="start">▶ START AUDIO</button>
     <button id="stop" disabled>■</button>
@@ -112,10 +131,13 @@ const ctx = canvas.getContext('2d');
 const startBtn = document.getElementById('start');
 const stopBtn = document.getElementById('stop');
 const statusEl = document.getElementById('status');
+const micSelect = document.getElementById('micSelect');
 
 let audioCtx, analyser, stream, source;
 let data, running = false, raf;
 let wakeLock = null;
+let micDevices = [];
+let switchingMic = false;
 const COUNT = 64;
 let levels = new Array(COUNT).fill(0);
 
@@ -181,6 +203,72 @@ function updateLevels() {
   document.getElementById('treble').textContent = avg(20,55);
 }
 
+
+function isBuiltInMic(label) {
+  return /built.?in|internal|phone|handset|내장|휴대전화|기기 마이크/i.test(label);
+}
+
+async function listMicrophones() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  micDevices = devices.filter(d => d.kind === 'audioinput');
+  micSelect.innerHTML = '';
+
+  if (!micDevices.length) {
+    micSelect.add(new Option('마이크 장치를 찾을 수 없습니다', ''));
+    micSelect.disabled = true;
+    return '';
+  }
+
+  micDevices.forEach((device, index) => {
+    const label = device.label || `마이크 ${index + 1}`;
+    micSelect.add(new Option(label, device.deviceId));
+  });
+
+  const builtIn = micDevices.find(d => isBuiltInMic(d.label));
+  const preferred = builtIn || micDevices.find(d => /default/i.test(d.label)) || micDevices[0];
+  micSelect.value = preferred.deviceId;
+  micSelect.disabled = false;
+  return preferred.deviceId;
+}
+
+async function replaceMicrophone(deviceId) {
+  if (!deviceId || switchingMic) return;
+  switchingMic = true;
+  try {
+    const nextStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: { exact: deviceId },
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    });
+    const nextSource = audioCtx.createMediaStreamSource(nextStream);
+    nextSource.connect(analyser);
+
+    const oldStream = stream;
+    const oldSource = source;
+    stream = nextStream;
+    source = nextSource;
+    if (oldSource) oldSource.disconnect();
+    if (oldStream) oldStream.getTracks().forEach(t => t.stop());
+  } finally {
+    switchingMic = false;
+  }
+}
+
+micSelect.addEventListener('change', async () => {
+  if (!running || !micSelect.value) return;
+  try {
+    await replaceMicrophone(micSelect.value);
+    document.getElementById('subText').textContent = 'MICROPHONE: ' +
+      (micSelect.selectedOptions[0]?.textContent || 'SELECTED');
+  } catch (e) {
+    alert('선택한 마이크를 사용할 수 없습니다.\n' + e.message);
+    await listMicrophones();
+  }
+});
+
 async function keepAwake() {
   try {
     if('wakeLock' in navigator)
@@ -199,13 +287,35 @@ startBtn.onclick = async () => {
     if(!navigator.mediaDevices?.getUserMedia)
       throw new Error('HTTPS 연결이 필요합니다.');
 
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio:{
-        echoCancellation:false,
-        noiseSuppression:false,
-        autoGainControl:false
+    // 최초 권한 획득 후 실제 입력 장치 목록을 확인합니다.
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const preferredMicId = await listMicrophones();
+
+    if (preferredMicId) {
+      const initialDevice = micDevices.find(d => d.deviceId === preferredMicId);
+      const selectedLabel = initialDevice?.label || '';
+      // 자동으로 식별된 내장 마이크(또는 기본 입력)를 명시적으로 지정합니다.
+      if (preferredMicId) {
+        const firstStream = stream;
+        try {
+          const selectedStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              deviceId: { exact: preferredMicId },
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false
+            }
+          });
+          stream = selectedStream;
+          firstStream.getTracks().forEach(t => t.stop());
+        } catch (deviceError) {
+          stream = firstStream;
+          console.warn('명시적 마이크 선택을 사용할 수 없어 기본 입력을 유지합니다.', deviceError);
+        }
       }
-    });
+      document.getElementById('subText').textContent =
+        'INPUT: ' + (selectedLabel || 'SELECTED DEVICE');
+    }
 
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     await audioCtx.resume();
@@ -237,6 +347,7 @@ startBtn.onclick = async () => {
 stopBtn.onclick = async () => {
   running = false;
   if(stream) stream.getTracks().forEach(t=>t.stop());
+  if(source) { try { source.disconnect(); } catch(e) {} }
   if(audioCtx) await audioCtx.close();
   if(wakeLock) { await wakeLock.release(); wakeLock=null; }
 
@@ -256,6 +367,8 @@ stopBtn.onclick = async () => {
 
   startBtn.disabled = false;
   startBtn.textContent = '▶ START AUDIO';
+  micSelect.disabled = true;
+  micSelect.innerHTML = '<option value="">마이크 시작 후 장치를 확인합니다</option>';
   stopBtn.disabled = true;
 };
 
