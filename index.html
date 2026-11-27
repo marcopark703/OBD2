@@ -378,8 +378,10 @@ header{
 .ambient-metric{font-size:clamp(44px,9vw,76px);font-weight:250;letter-spacing:-.065em;line-height:1;white-space:nowrap}
 .ambient-metric.right{font-size:clamp(38px,7.8vw,66px);text-align:right}
 .ambient-unit{font-size:.35em;letter-spacing:-.01em;font-weight:350;margin-left:.12em;color:rgba(222,245,233,.82)}
-body.ambient-fullscreen .visualizer-box{position:fixed;inset:0;z-index:10000;width:100vw;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none}
-body.ambient-fullscreen .ambient-overlay{display:flex}
+body.ambient-fullscreen .visualizer-box,
+body.ambient-expanded .visualizer-box{position:fixed;inset:0;z-index:10000;width:100vw;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none}
+body.ambient-fullscreen .ambient-overlay,
+body.ambient-expanded .ambient-overlay{display:flex}
 @media (orientation:landscape){.ambient-overlay{padding:5vh 6vw}.ambient-time{font-size:clamp(48px,9vw,78px)}.ambient-date{margin-top:8px}.ambient-metric{font-size:clamp(38px,7vw,62px)}.ambient-metric.right{font-size:clamp(34px,6.2vw,56px)}}
 /* 6. 하단 컨트롤 바 (연결 시 자동 숨김) */
 .bottom-controls{
@@ -805,7 +807,7 @@ function resizeVisualizer(){
 }
 window.addEventListener('resize',resizeVisualizer);
 document.addEventListener('fullscreenchange',()=>{
-  document.body.classList.toggle('ambient-fullscreen',!!document.fullscreenElement&&document.fullscreenElement.contains(vizBox));
+  document.body.classList.toggle('ambient-fullscreen',document.fullscreenElement===vizBox);
   setTimeout(resizeVisualizer,100);
 });
 window.addEventListener('orientationchange',()=>setTimeout(resizeVisualizer,180));
@@ -867,11 +869,21 @@ ambientFrame=requestAnimationFrame(drawVisualizer);
 
 async function toggleAmbientFullscreen(){
   try{
-    if(document.fullscreenElement){
-      if(document.fullscreenElement===vizBox)await document.exitFullscreen();
-    }else if(vizBox.requestFullscreen){
-      await vizBox.requestFullscreen();
+    if(document.fullscreenElement===vizBox){
+      await document.exitFullscreen();
+      return;
     }
+    // The dashboard itself may already be fullscreen after OBD connection.
+    // In that case expand the visualizer with a CSS overlay instead of
+    // requesting a second, nested fullscreen transition.
+    if(document.fullscreenElement){
+      document.body.classList.toggle('ambient-expanded');
+      setTimeout(resizeVisualizer,100);
+      return;
+    }
+    if(vizBox.requestFullscreen)await vizBox.requestFullscreen();
+    else document.body.classList.toggle('ambient-expanded');
+    setTimeout(resizeVisualizer,100);
   }catch(e){log('Ambient fullscreen: '+e.message);}
 }
 vizBox.addEventListener('click',toggleAmbientFullscreen);
