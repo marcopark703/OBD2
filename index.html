@@ -1190,6 +1190,9 @@ async function startBLE() {
     return;
   }
   if (autoRoutine) {
+    // Fullscreen must be requested directly from the CONNECT button gesture,
+    // before the Bluetooth chooser or any other asynchronous operation.
+    requestFullscreenSafe();
     await enableWakeLock();
   }
 
@@ -1216,10 +1219,6 @@ async function startBLE() {
       await delay(100);
     }
     setUIConnectedState('connected');
-
-    if (autoRoutine) {
-      await requestFullscreenSafe();
-    }
 
     poll();
   } catch (err) {
