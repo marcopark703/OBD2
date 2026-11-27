@@ -1222,20 +1222,8 @@ async function startBLE() {
     alert("이 브라우저는 Web Bluetooth를 지원하지 않습니다. Chrome/Android 환경에서 이용하세요.");
     return;
   }
-  // Android Chrome treats fullscreen and the Bluetooth chooser as
-  // separate user-activation actions. Run them in two deliberate taps:
-  // tap 1 enters fullscreen; tap 2 opens the Bluetooth chooser.
+  // The CONNECT gesture is reserved for opening the Bluetooth chooser.
   if (bleConnectionStarting || connected) return;
-  if (autoRoutine && !document.fullscreenElement) {
-    bleConnectionStarting = true;
-    $('connectBtn').disabled = true;
-    requestFullscreenSafe().finally(() => {
-      bleConnectionStarting = false;
-      $('connectBtn').disabled = false;
-      $('statusText').textContent = 'DISCONNECTED';
-    });
-    return;
-  }
 
   bleConnectionStarting = true;
   $('connectBtn').disabled = true;
@@ -1254,8 +1242,8 @@ async function startBLE() {
       connected = false;
       setUIConnectedState('disconnected');
       log("GATT disconnected");
-      disableWakeLock();
-      exitFullscreenSafe();
+      // Keep the dashboard immersive after an OBD disconnect.
+      if (autoRoutine && document.visibilityState === 'visible') enableWakeLock();
     });
 
     server = await device.gatt.connect();
@@ -1277,7 +1265,6 @@ async function startBLE() {
     log("BLE Err: " + err.message);
     setUIConnectedState('disconnected');
     if (device?.gatt?.connected) device.gatt.disconnect();
-    disableWakeLock();
     // Keep fullscreen active after chooser cancellation or connection error.
     // The user can retry without another fullscreen transition.
   }
@@ -1287,8 +1274,7 @@ function disconnectBLE() {
   connected = false;
   if (device?.gatt?.connected) device.gatt.disconnect();
   setUIConnectedState('disconnected');
-  disableWakeLock();
-  exitFullscreenSafe();
+  // Keep fullscreen and screen-on mode when the OBD adapter is disconnected.
 }
 
 // --- 7. DEMO 모드 (시뮬레이터) ---
@@ -1477,6 +1463,28 @@ document.addEventListener('fullscreenchange', () => {
   updateFullscreenButtons(!!document.fullscreenElement);
 });
 
+// Try immersive mode on load. Browsers may reject fullscreen without a gesture;
+// the first screen touch retries it and also requests a screen wake lock.
+if (autoRoutine) {
+  window.addEventListener('load', () => {
+    requestFullscreenSafe();
+  }, { once: true });
+
+  let firstInteractionHandled = false;
+  document.addEventListener('pointerup', () => {
+    if (firstInteractionHandled) return;
+    firstInteractionHandled = true;
+    requestFullscreenSafe();
+    enableWakeLock();
+  }, { once: true, passive: true });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && autoRoutine) {
+      enableWakeLock();
+    }
+  });
+}
+
 // --- 9. 이벤트 바인딩 ---
 $('connectBtn').onclick = startBLE;
 $('disconnectBtn').onclick = () => {
@@ -1489,6 +1497,12 @@ $('autoRoutineBtn').onclick = () => {
   autoRoutine = !autoRoutine;
   localStorage.setItem('obd_auto_routine', autoRoutine);
   updateAutoRoutineButton();
+  if (autoRoutine) {
+    requestFullscreenSafe();
+    enableWakeLock();
+  } else {
+    disableWakeLock();
+  }
 };
 
 $('modalDemoBtn').onclick = () => {
