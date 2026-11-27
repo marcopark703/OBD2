@@ -42,7 +42,7 @@ let telemetry=null,packetAt=0;
 const channel=('BroadcastChannel' in window)?new BroadcastChannel('essenza-obd-telemetry'):null;
 function applyPacket(p){
  if(!p||p.source!=='essenza-obd')return;
- telemetry=p;packetAt=Date.now();
+ telemetry=p;packetAt=Number(p.timestamp)||Date.now();
 }
 function readStored(){
  try{const p=JSON.parse(localStorage.getItem('essenza-obd-telemetry')||'null');if(p)applyPacket(p);}catch(e){}
