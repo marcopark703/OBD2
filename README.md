@@ -1,28 +1,114 @@
-# Universal OBD-II Dashboard PWA — v1.0.0
+# Universal OBD-II Dashboard PWA — v1.2.0
 
-## Release contents
-- Responsive PWA with a dedicated narrow-screen layout for Galaxy Fold cover displays.
-- Speed uses a dominant full-width panel; RPM moves to a separate row on narrow screens.
-- Enlarged coolant, oil-temperature and boost gauges, plus battery and engine-load cards.
-- Near-black / charcoal / red theme based on the user's Photoshop mockup.
-- Generic BLE device chooser, common BLE GATT profile probing and standard OBD-II PID polling.
-- Full-screen request, optional Screen Wake Lock, connection log and offline app-shell cache.
+Android 스마트폰에서 BLE 방식의 OBD-II 어댑터와 연결해 차량 데이터를 실시간으로 표시하는 웹 대시보드입니다. 세로·가로 화면과 폴더블 기기에 대응하며, 전체 화면 및 화면 켜짐 유지 기능을 제공합니다.
 
-## Deploy and install
-1. Extract this ZIP.
-2. Upload the contents to an HTTPS static host such as GitHub Pages or Cloudflare Pages.
-3. Open the HTTPS URL in an Android browser supporting Web Bluetooth.
-4. Choose Install / Add to Home Screen in the browser menu.
-5. Open the installed PWA, press CONNECT OBD-II, and select the BLE adapter.
+> **현재 상태:** 개인 차량 중심의 실사용 테스트 단계입니다. 모든 차량·OBD 어댑터에서의 호환성이나 계기값의 정확성이 검증된 제품은 아닙니다.
 
-## Known limitations
-- This is a first field-test release, not a universally validated product.
-- Web Bluetooth requires a supported browser and secure HTTPS origin.
-- Bluetooth Classic SPP and Wi-Fi adapters are not supported by this browser-only PWA.
-- BLE adapters use different GATT layouts. Several common profiles are probed, but all adapters are not guaranteed.
-- ELM-compatible commands and standard PID support vary by adapter and vehicle ECU.
-- Oil temperature (PID 0x5C) is displayed only if supported by the ECU.
-- Boost is calculated from MAP minus BARO; both values must be supported.
-- Vehicle-specific enhanced PIDs are not implemented in v1.0.0.
-- Refresh rate depends on adapter throughput, ECU response and sequential polling.
-- Validate readings while parked. Do not troubleshoot or operate the dashboard while driving.
+## 주요 기능
+
+- **속도계:** 아날로그 스타일 표시와 디지털 속도값
+- **RPM:** 반원형 눈금과 디지털 회전수 표시
+- **보조 데이터:** 냉각수 온도, 엔진 오일 온도, 부스트 압력, 배터리 전압, 엔진 부하
+- **앰비언트 비주얼라이저:** 차량 데이터와 연동되는 시각 효과 및 확장 화면
+- **반응형 레이아웃:** 세로·가로 화면 및 좁은 화면 대응
+- **화면 제어:** 전체 화면, Screen Wake Lock(지원 브라우저에서 화면 켜짐 유지)
+- **연결 진단:** 연결 상태와 통신 로그 확인
+- **PWA:** 홈 화면 설치 및 서비스 워커 기반 앱 셸 캐시
+
+## 실행 환경 및 연결 조건
+
+다음 조건이 필요합니다.
+
+1. Android 스마트폰 또는 태블릿
+2. Web Bluetooth를 지원하는 브라우저(권장: 최신 Chrome)
+3. HTTPS로 제공되는 웹 주소
+4. BLE(Bluetooth Low Energy) 방식의 OBD-II 어댑터
+5. 차량의 OBD-II 포트 및 ECU가 해당 표준 PID를 지원할 것
+
+**주의:** iPhone/iOS의 일반적인 브라우저 환경에서는 Web Bluetooth를 사용할 수 없습니다. Bluetooth Classic(SPP) 방식 어댑터와 Wi-Fi 방식 어댑터도 이 웹 앱에서 지원하지 않습니다.
+
+## 설치 및 사용 방법
+
+1. GitHub Pages 등 HTTPS를 지원하는 정적 호스팅에 저장소 파일을 배포합니다.
+2. Android의 Chrome에서 배포된 HTTPS 주소를 엽니다.
+3. 필요하면 Chrome 메뉴에서 '홈 화면에 추가' 또는 앱 설치를 선택합니다.
+4. 휴대폰 블루투스를 켭니다.
+5. 대시보드에서 **CONNECT OBD-II**를 누릅니다.
+6. 브라우저의 블루투스 기기 선택창에서 OBD 어댑터를 선택합니다.
+
+### 연결 선택창이 열리지 않을 때
+
+- Chrome을 사용하고 최신 버전으로 업데이트했는지 확인합니다.
+- Android 설정 → 애플리케이션 → Chrome → 권한에서 **근처 기기** 권한을 허용합니다.
+- 휴대폰의 블루투스가 켜져 있는지 확인합니다.
+- Android의 위치 서비스를 켠 상태에서도 다시 시도합니다. 기기 및 OS 버전에 따라 블루투스 검색 동작에 영향을 줄 수 있습니다.
+- Chrome의 사이트 권한에서 관련 권한이 차단되어 있지 않은지 확인합니다.
+- HTTPS 주소로 접속했는지 확인합니다.
+
+브라우저·OS·어댑터 조합에 따라 동작이 다를 수 있습니다.
+
+## 표시 데이터 및 계산 방식
+
+| 표시 항목 | OBD-II 데이터 / 계산 |
+|---|---|
+| 차량 속도 | 표준 PID 0D |
+| 엔진 RPM | 표준 PID 0C |
+| 냉각수 온도 | 표준 PID 05 |
+| 엔진 오일 온도 | 표준 PID 5C |
+| 흡기 매니폴드 압력(MAP) | 표준 PID 0B |
+| 대기압(BARO) | 표준 PID 33 |
+| 부스트 압력 | MAP - BARO로 계산 |
+| 엔진 부하 | 표준 PID 04 |
+| 배터리 전압 | ELM 호환 명령 ATRV 응답 |
+
+부스트는 MAP과 BARO 값이 모두 정상적으로 읽힐 때 계산됩니다. 실제 ECU가 지원하지 않는 PID는 값을 표시할 수 없습니다.
+
+## 온도 및 상태 색상 기준
+
+현재 코드에 구현된 상태 표시 기준입니다. 차량별 제조사 권장 온도나 경고 기준을 대체하지 않습니다.
+
+| 항목 | 조건 | 표시 |
+|---|---:|---|
+| 냉각수 | 60℃ 미만 | 파란색 |
+| 냉각수 | 100℃ 이상 | 주황색 |
+| 냉각수 | 108℃ 이상 | 빨간색 |
+| 엔진 오일 | 115℃ 이상 | 주황색 |
+| 엔진 오일 | 125℃ 이상 | 빨간색 |
+| 배터리 전압 | 12.5V 미만 | 주황색 |
+| 배터리 전압 | 12.0V 미만 또는 15.0V 초과 | 빨간색 |
+| 엔진 부하 | 85% 이상 | 주황색 |
+
+**검증 상태:** 색상 전환 조건은 코드에 구현되어 있으나 실제 주행 환경에서의 작동 및 적정 임계값은 추가 확인이 필요합니다. DEMO 모드는 화면 동작을 확인하기 위한 시뮬레이터이며, 실제 차량의 센서값이나 ECU 반응을 검증하지 않습니다.
+
+## 호환성 및 알려진 제한 사항
+
+- Web Bluetooth는 지원 브라우저와 보안 연결(HTTPS)이 필요합니다.
+- BLE 어댑터마다 GATT 서비스·특성 구성이 달라 모든 제품의 연결을 보장하지 않습니다.
+- 현재 코드는 몇 가지 일반적인 BLE GATT 프로파일을 탐색합니다.
+- Bluetooth Classic SPP 및 Wi-Fi OBD 어댑터는 지원하지 않습니다.
+- ELM 호환 명령과 표준 PID 지원 여부는 어댑터 및 차량 ECU에 따라 다릅니다.
+- 오일 온도(PID 5C)는 ECU가 지원하는 경우에만 표시됩니다.
+- 부스트 값은 MAP 및 BARO 값의 지원 여부와 정확도에 영향을 받습니다.
+- 차량 제조사별 확장 PID는 아직 구현하지 않았습니다.
+- 순차적으로 PID를 읽으므로 갱신 속도는 어댑터 통신 속도와 ECU 응답에 따라 달라집니다.
+- 전체 화면 및 화면 켜짐 유지 기능은 브라우저와 OS 정책에 따라 제한될 수 있습니다.
+
+## 추가 테스트가 필요한 항목
+
+- [ ] 서로 다른 Android 기기에서 블루투스 선택창 및 연결 확인
+- [ ] 여러 BLE OBD 어댑터의 GATT 호환성 확인
+- [ ] 냉각수·오일 온도 실측값과 화면 표시값 비교
+- [ ] 온도 구간별 색상 전환 확인
+- [ ] 속도·RPM·부스트·엔진 부하 데이터의 실제 변화 추적
+- [ ] 장시간 연결 시 데이터 누락 및 연결 안정성 확인
+- [ ] 세로·가로·전체 화면 전환과 화면 켜짐 유지 확인
+
+## 안전 주의
+
+차량 정차 상태에서 연결과 표시값을 확인하십시오. 주행 중 스마트폰을 조작하거나 화면을 보며 문제를 진단하지 마십시오. 이 앱은 보조 모니터링 도구이며 차량의 순정 계기판이나 경고 시스템을 대체하지 않습니다.
+
+## 버전
+
+- **v1.2.0** — 대시보드 및 앰비언트 비주얼라이저 통합 상태를 반영하고, 실행 조건·연결 안내·데이터 정의·검증 필요 항목을 문서화
+- v1.1.0 — 대시보드 레이아웃 및 표시 기능 개선
+- v1.0.0 — 최초 공개 버전
